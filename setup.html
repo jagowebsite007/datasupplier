@@ -1,0 +1,300 @@
+/**
+ * ============================================================================
+ * FILE 1: setup.gs (GOOGLE APPS SCRIPT DATABASE & DRIVE INITIALIZER)
+ * Inisialisasi Database Google Spreadsheet ("Suppliers" & "Products") serta
+ * Struktur Folder Utama & Sub-Folder Google Drive Otomatis per Supplier.
+ *
+ * PETUNJUK PENTING:
+ * 1. Buat 2 file script di Google Apps Script: "setup.gs" dan "kode.gs"
+ * 2. Buka "setup.gs" -> Pilih fungsi "setupDatabase" di atas -> Klik "Run"
+ * 3. Deploy -> New deployment -> Web app (Execute as: Me, Who has access: Anyone)
+ * ============================================================================
+ */
+
+const CUSTOM_SPREADSHEET_ID_OR_URL = '';
+const CUSTOM_DRIVE_FOLDER_ID_OR_URL = '';
+
+const SHEET_SUPPLIERS_NAME = 'Suppliers';
+const SHEET_PRODUCTS_NAME = 'Products';
+const MAIN_DRIVE_FOLDER_NAME = 'Portal_Harga_Supplier_Drive';
+
+/**
+ * Mengekstrak ID Google Drive Folder atau Google Spreadsheet dari URL maupun teks ID
+ */
+function extractGoogleId_(inputUrlOrId) {
+  if (!inputUrlOrId) return '';
+  const raw = String(inputUrlOrId).trim();
+  const folderMatch = raw.match(/\/folders\/([a-zA-Z0-9_-]{15,})/);
+  if (folderMatch && folderMatch[1]) return folderMatch[1];
+
+  const sheetMatch = raw.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]{15,})/);
+  if (sheetMatch && sheetMatch[1]) return sheetMatch[1];
+
+  const fileMatch = raw.match(/\/d\/([a-zA-Z0-9_-]{15,})/);
+  if (fileMatch && fileMatch[1]) return fileMatch[1];
+
+  const idParamMatch = raw.match(/[?&]id=([a-zA-Z0-9_-]{15,})/);
+  if (idParamMatch && idParamMatch[1]) return idParamMatch[1];
+
+  if (/^[a-zA-Z0-9_-]{18,65}$/.test(raw)) {
+    return raw;
+  }
+  return '';
+}
+
+/**
+ * Mendapatkan atau membuat Spreadsheet aktif beserta Sheet Suppliers & Products
+ */
+function setupSheetsOnly_() {
+  const scriptProps = PropertiesService.getScriptProperties();
+  let ss = null;
+
+  const customSheetId = extractGoogleId_(CUSTOM_SPREADSHEET_ID_OR_URL) || scriptProps.getProperty('SPREADSHEET_ID');
+  if (customSheetId) {
+    try {
+      ss = SpreadsheetApp.openById(customSheetId);
+    } catch (e) {
+      Logger.log('Info openById Spreadsheet: ' + e.message);
+    }
+  }
+
+  if (!ss) {
+    try {
+      ss = SpreadsheetApp.getActiveSpreadsheet();
+    } catch (e) {}
+  }
+
+  if (!ss) {
+    ss = SpreadsheetApp.create('Database_Portal_Harga_Supplier');
+  }
+
+  scriptProps.setProperty('SPREADSHEET_ID', ss.getId());
+
+  // 1. Siapkan Sheet Suppliers (10 Kolom)
+  let sheetSuppliers = ss.getSheetByName(SHEET_SUPPLIERS_NAME);
+  if (!sheetSuppliers) {
+    sheetSuppliers = ss.insertSheet(SHEET_SUPPLIERS_NAME);
+  }
+
+  if (sheetSuppliers.getLastRow() === 0) {
+    const supHeaders = [
+      'id_supplier',
+      'username',
+      'password',
+      'nama_supplier',
+      'role',
+      'kontak_wa',
+      'alamat',
+      'status_aktif',
+      'created_at',
+      'folder_drive_url'
+    ];
+    sheetSuppliers.getRange(1, 1, 1, supHeaders.length).setValues([supHeaders]);
+    sheetSuppliers.getRange(1, 1, 1, supHeaders.length).setFontWeight('bold').setBackground('#0f766e').setFontColor('#ffffff');
+
+    const now = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+    const defaultSuppliers = [
+      ['ADMIN-01', 'admin', 'admin123', 'Administrator Utama', 'admin', '081200000001', 'Kantor Pusat', 'Aktif', now, ''],
+      ['SUP-001', 'supplier1', '123456', 'PT Sumber Pangan Jaya', 'supplier', '081234567890', 'Jl. Industri Raya No. 12, Jakarta', 'Aktif', now, ''],
+      ['SUP-002', 'supplier2', '123456', 'CV Berkah Sembako Makmur', 'supplier', '081987654321', 'Jl. Niaga Timur No. 88, Surabaya', 'Aktif', now, '']
+    ];
+    sheetSuppliers.getRange(2, 1, defaultSuppliers.length, defaultSuppliers[0].length).setValues(defaultSuppliers);
+  }
+
+  // 2. Siapkan Sheet Products (16 Kolom)
+  let sheetProducts = ss.getSheetByName(SHEET_PRODUCTS_NAME);
+  if (!sheetProducts) {
+    sheetProducts = ss.insertSheet(SHEET_PRODUCTS_NAME);
+  }
+
+  if (sheetProducts.getLastRow() === 0) {
+    const prodHeaders = [
+      'id_produk',
+      'id_supplier',
+      'nama_supplier',
+      'kode_sku',
+      'nama_produk',
+      'kategori',
+      'satuan',
+      'harga_supplier',
+      'harga_jual_supplier',
+      'harga_supplier_lama',
+      'harga_jual_lama',
+      'total_stok',
+      'foto_url',
+      'link_download_foto',
+      'catatan',
+      'updated_at'
+    ];
+    sheetProducts.getRange(1, 1, 1, prodHeaders.length).setValues([prodHeaders]);
+    sheetProducts.getRange(1, 1, 1, prodHeaders.length).setFontWeight('bold').setBackground('#0f766e').setFontColor('#ffffff');
+
+    const now = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+    const sampleProducts = [
+      [
+        'PRD-1001',
+        'SUP-001',
+        'PT Sumber Pangan Jaya',
+        'BRS-PRM-5KG',
+        'Beras Premium Ramos 5 Kg',
+        'Sembako',
+        'Karung 5Kg',
+        68500,
+        74500,
+        67000,
+        73000,
+        120,
+        'https://placehold.co/200x200/0f766e/ffffff?text=Beras+5Kg',
+        'https://placehold.co/200x200/0f766e/ffffff?text=Beras+5Kg',
+        'Minimal order 10 karung gratis ongkir',
+        now
+      ],
+      [
+        'PRD-1002',
+        'SUP-001',
+        'PT Sumber Pangan Jaya',
+        'MYK-GRG-2L',
+        'Minyak Goreng Sawit Pouch 2 Liter',
+        'Sembako',
+        'Pouch 2L',
+        34000,
+        38500,
+        35500,
+        39500,
+        85,
+        'https://placehold.co/200x200/0284c7/ffffff?text=Minyak+2L',
+        'https://placehold.co/200x200/0284c7/ffffff?text=Minyak+2L',
+        'Harga turun minggu ini, stok siap kirim',
+        now
+      ],
+      [
+        'PRD-1003',
+        'SUP-002',
+        'CV Berkah Sembako Makmur',
+        'GUL-PSR-1KG',
+        'Gula Pasir Kristal Putih 1 Kg',
+        'Sembako',
+        'Pack 1Kg',
+        16200,
+        18000,
+        16200,
+        18000,
+        40,
+        'https://placehold.co/200x200/7c3aed/ffffff?text=Gula+1Kg',
+        'https://placehold.co/200x200/7c3aed/ffffff?text=Gula+1Kg',
+        'Kemasan tebal kualitas supermarket',
+        now
+      ]
+    ];
+    sheetProducts.getRange(2, 1, sampleProducts.length, sampleProducts[0].length).setValues(sampleProducts);
+  }
+
+  return {
+    ss: ss,
+    sheetSuppliers: sheetSuppliers,
+    sheetProducts: sheetProducts
+  };
+}
+
+/**
+ * Mendapatkan atau membuat Folder Utama di Google Drive
+ */
+function getOrCreateMainDriveFolder_() {
+  const scriptProps = PropertiesService.getScriptProperties();
+  let mainFolder = null;
+
+  const savedFolderId = extractGoogleId_(CUSTOM_DRIVE_FOLDER_ID_OR_URL) || scriptProps.getProperty('DRIVE_FOLDER_ID');
+  if (savedFolderId) {
+    try {
+      mainFolder = DriveApp.getFolderById(savedFolderId);
+    } catch (e) {
+      Logger.log('Folder ID tersimpan tidak ditemukan, membuat baru: ' + e.message);
+    }
+  }
+
+  if (!mainFolder) {
+    const folders = DriveApp.getFoldersByName(MAIN_DRIVE_FOLDER_NAME);
+    if (folders.hasNext()) {
+      mainFolder = folders.next();
+    } else {
+      mainFolder = DriveApp.createFolder(MAIN_DRIVE_FOLDER_NAME);
+    }
+  }
+
+  try {
+    mainFolder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  } catch (e) {}
+
+  scriptProps.setProperty('DRIVE_FOLDER_ID', mainFolder.getId());
+  return mainFolder;
+}
+
+/**
+ * Mendapatkan atau membuat Sub-Folder Khusus untuk masing-masing Supplier
+ * Nama Sub-Folder: "[ID_Supplier] - [Nama_Supplier]"
+ */
+function getOrCreateSupplierSubFolder_(idSupplier, namaSupplier) {
+  const mainFolder = getOrCreateMainDriveFolder_();
+  const cleanId = String(idSupplier || 'SUP').trim();
+  const cleanName = String(namaSupplier || 'Supplier').trim().replace(/[\\/:*?"<>|]/g, '');
+  const desiredFolderName = cleanId + ' - ' + cleanName;
+
+  const subFolders = mainFolder.getFolders();
+  while (subFolders.hasNext()) {
+    const folder = subFolders.next();
+    const fName = folder.getName();
+    if (fName === desiredFolderName || fName.indexOf(cleanId + ' -') === 0) {
+      if (fName !== desiredFolderName) {
+        try {
+          folder.setName(desiredFolderName);
+        } catch (e) {}
+      }
+      return folder;
+    }
+  }
+
+  const newSubFolder = mainFolder.createFolder(desiredFolderName);
+  try {
+    newSubFolder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  } catch (e) {}
+  return newSubFolder;
+}
+
+/**
+ * FUNGSI UTAMA INISIALISASI DATABASE & SUB-FOLDER GOOGLE DRIVE
+ * Jalankan (Run) fungsi ini pertama kali di Editor Google Apps Script.
+ */
+function setupDatabase() {
+  const db = setupSheetsOnly_();
+  const mainFolder = getOrCreateMainDriveFolder_();
+  const sheetSup = db.sheetSuppliers;
+  const supData = sheetSup.getDataRange().getValues();
+  let subFolderCount = 0;
+
+  for (let i = 1; i < supData.length; i++) {
+    const supId = String(supData[i][0] || '').trim();
+    const supName = String(supData[i][3] || '').trim();
+    const role = String(supData[i][4] || 'supplier').trim().toLowerCase();
+
+    if (supId && role !== 'admin') {
+      const subFolder = getOrCreateSupplierSubFolder_(supId, supName);
+      sheetSup.getRange(i + 1, 10).setValue(subFolder.getUrl());
+      subFolderCount++;
+    }
+  }
+
+  Logger.log('======================================================');
+  Logger.log('SINKRONISASI DATABASE & SUB-FOLDER DRIVE BERHASIL!');
+  Logger.log('Spreadsheet URL : ' + db.ss.getUrl());
+  Logger.log('Folder Drive URL: ' + mainFolder.getUrl());
+  Logger.log('Total Sub-Folder: ' + subFolderCount + ' Sub-Folder Supplier');
+  Logger.log('======================================================');
+
+  return {
+    spreadsheetId: db.ss.getId(),
+    spreadsheetUrl: db.ss.getUrl(),
+    mainDriveFolderId: mainFolder.getId(),
+    mainDriveFolderUrl: mainFolder.getUrl(),
+    subFolderCount: subFolderCount
+  };
+}
