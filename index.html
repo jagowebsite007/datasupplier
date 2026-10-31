@@ -624,6 +624,24 @@
           </div>
 
           <div class="flex flex-col sm:flex-row gap-4 items-center">
+            <!-- Thumbnail Preview Foto Produk -->
+            <div class="relative w-20 h-20 rounded-xl bg-white border border-slate-200 overflow-hidden shrink-0 shadow-sm flex items-center justify-center">
+              <img
+                id="formImagePreview"
+                src="https://placehold.co/200x200/e2e8f0/64748b?text=Foto"
+                referrerpolicy="no-referrer"
+                alt="Preview Foto Produk"
+                onerror="this.onerror=null;this.src='https://placehold.co/200x200/e2e8f0/64748b?text=Foto';"
+                class="w-full h-full object-cover"
+              />
+              <span
+                id="compressionBadge"
+                class="panel-hidden absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-emerald-600 text-white text-[9px] font-bold shadow"
+              >
+                Siap Upload
+              </span>
+            </div>
+
             <!-- Pilihan Buka Kamera Langsung, Pilih dari Galeri, atau Paste Link Google Drive -->
             <div class="flex-1 w-full space-y-2.5">
               <div>
@@ -2202,11 +2220,15 @@
       pendingBase64Image = compressedDataUrl;
       pendingMimeType = 'image/jpeg';
 
-      document.getElementById('formImagePreview').src = compressedDataUrl;
-      document.getElementById('formImageUrl').value = '';
+      const previewEl = document.getElementById('formImagePreview');
+      if (previewEl) previewEl.src = compressedDataUrl;
+      const urlInputEl = document.getElementById('formImageUrl');
+      if (urlInputEl) urlInputEl.value = '';
       showPanel('compressionBadge');
-      document.getElementById('convertedUrlHint').textContent =
-        'Foto kamera berhasil diambil & siap disinkronkan ke Sub-Folder Drive.';
+      const hintEl = document.getElementById('convertedUrlHint');
+      if (hintEl) {
+        hintEl.textContent = 'Foto kamera berhasil diambil & siap disinkronkan ke Sub-Folder Drive.';
+      }
 
       stopDirectCamera();
       showToast('Foto berhasil dijepret dari kamera!');
@@ -2242,10 +2264,13 @@
           pendingBase64Image = compressedDataUrl;
           pendingMimeType = 'image/jpeg';
 
-          document.getElementById('formImagePreview').src = compressedDataUrl;
+          const previewEl = document.getElementById('formImagePreview');
+          if (previewEl) previewEl.src = compressedDataUrl;
           showPanel('compressionBadge');
-          document.getElementById('convertedUrlHint').textContent =
-            'Foto siap diupload ke Sub-Folder Drive & foto lama otomatis dihapus.';
+          const hintEl = document.getElementById('convertedUrlHint');
+          if (hintEl) {
+            hintEl.textContent = 'Foto siap diupload ke Sub-Folder Drive & foto lama otomatis dihapus.';
+          }
         };
         img.src = e.target.result;
       };
@@ -2259,14 +2284,15 @@
 
       if (converted) {
         pendingBase64Image = '';
-        document.getElementById('formImageFile').value = '';
+        const fileEl = document.getElementById('formImageFile');
+        if (fileEl) fileEl.value = '';
         const galEl = document.getElementById('formGalleryFile');
         if (galEl) galEl.value = '';
         hidePanel('compressionBadge');
-        hintEl.textContent = 'Link aktif: ' + converted;
-        previewEl.src = converted;
+        if (hintEl) hintEl.textContent = 'Link aktif: ' + converted;
+        if (previewEl) previewEl.src = converted;
       } else {
-        hintEl.textContent = '';
+        if (hintEl) hintEl.textContent = '';
       }
     }
 
@@ -2286,12 +2312,15 @@
     function openProductModal(productId = '') {
       stopDirectCamera();
       pendingBase64Image = '';
-      document.getElementById('formImageFile').value = '';
+      const fileEl = document.getElementById('formImageFile');
+      if (fileEl) fileEl.value = '';
       const galEl = document.getElementById('formGalleryFile');
       if (galEl) galEl.value = '';
       hidePanel('compressionBadge');
-      document.getElementById('convertedUrlHint').textContent = '';
+      const hintEl = document.getElementById('convertedUrlHint');
+      if (hintEl) hintEl.textContent = '';
 
+      const previewEl = document.getElementById('formImagePreview');
       const isAdmin = currentUser && String(currentUser.role).toLowerCase() === 'admin';
       if (isAdmin) {
         showPanel('adminSupplierSelectWrap');
@@ -2318,7 +2347,9 @@
         document.getElementById('formHargaSupplier').value = prod.harga_supplier || 0;
         document.getElementById('formHargaJualSupplier').value = prod.harga_jual_supplier || 0;
         document.getElementById('formImageUrl').value = prod.foto_url || '';
-        document.getElementById('formImagePreview').src = convertToLh3DriveUrl(prod.foto_url) || 'https://placehold.co/200x200/e2e8f0/64748b?text=Foto';
+        if (previewEl) {
+          previewEl.src = convertToLh3DriveUrl(prod.foto_url) || 'https://placehold.co/200x200/e2e8f0/64748b?text=Foto';
+        }
         document.getElementById('formProductNotes').value = prod.catatan || '';
 
         if (isAdmin) {
@@ -2336,7 +2367,9 @@
         document.getElementById('formHargaJualSupplier').value = '';
         document.getElementById('formImageUrl').value = '';
         document.getElementById('formProductNotes').value = '';
-        document.getElementById('formImagePreview').src = 'https://placehold.co/200x200/e2e8f0/64748b?text=Foto';
+        if (previewEl) {
+          previewEl.src = 'https://placehold.co/200x200/e2e8f0/64748b?text=Foto';
+        }
       }
 
       updateMarginCalculator();
