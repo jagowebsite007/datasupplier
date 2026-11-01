@@ -1,10 +1,14 @@
 /**
  * ============================================================================
- * FILE 2: kode.gs (GOOGLE APPS SCRIPT REST API BACKEND)
+ * FILE 2: kode.gs (GOOGLE APPS SCRIPT REST API BACKEND + AI PRODUCT STUDIO)
  * File ini dipasang di Google Apps Script untuk melayani request dari
  * aplikasi frontend index.html yang di-deploy di Vercel.
  * ============================================================================
  */
+
+// Opsional: Anda bisa mengisi API Key Google AI Studio (Gemini) langsung di sini
+// atau mengisinya melalui menu "Tes & Pengaturan Drive" di Dashboard Admin.
+const DEFAULT_GEMINI_API_KEY_ = '';
 
 const DEFAULT_ACCOUNTS_ = [
   {
@@ -41,7 +45,6 @@ const DEFAULT_ACCOUNTS_ = [
 
 /**
  * Handler doGet(e) untuk mengecek status API Backend dari Vercel
- * (dan tetap mendukung HtmlService jika sewaktu-waktu dibuka langsung)
  */
 function doGet(e) {
   if (e && e.parameter && e.parameter.action === 'ping') {
@@ -54,8 +57,6 @@ function doGet(e) {
     ).setMimeType(ContentService.MimeType.JSON);
   }
 
-  // Jika di dalam project GAS tidak ada file index.html (karena index.html sudah di Vercel),
-  // kembalikan respons JSON status API aktif.
   try {
     return HtmlService.createHtmlOutputFromFile('index')
       .setTitle('Portal Pendataan Harga Supplier')
@@ -66,7 +67,7 @@ function doGet(e) {
       JSON.stringify({
         success: true,
         status: 'API_ONLY_MODE',
-        message: 'Backend Google Apps Script (Database Spreadsheet & Google Drive) Aktif untuk Vercel Frontend.'
+        message: 'Backend Google Apps Script (Database Spreadsheet, Google Drive & AI Product Studio) Aktif untuk Vercel Frontend.'
       })
     ).setMimeType(ContentService.MimeType.JSON);
   }
@@ -110,6 +111,9 @@ function doPost(e) {
         break;
       case 'getPhotoBase64ForDownload':
         result = getPhotoBase64ForDownload(args[0], args[1]);
+        break;
+      case 'generateAiProductPhoto':
+        result = generateAiProductPhoto(args[0], args[1], args[2]);
         break;
       default:
         throw new Error('Action API tidak dikenali: ' + action);
@@ -232,6 +236,106 @@ function renameDriveFileIfPossible_(fileIdOrUrl, newSmartFileName) {
   } catch (e) {
     Logger.log('Info renameDriveFileIfPossible_: ' + e.message);
     return false;
+  }
+}
+
+/**
+ * ============================================================================
+ * FITUR AI PRODUCT PHOTOGRAPHY (GOOGLE FLOW / GEMINI IMAGE GENERATOR)
+ * Mengubah foto produk mentah dari kamera/galeri menjadi foto produk studio
+ * menggunakan prompt:
+ * "Premium product photography, clean studio lighting, realistic shadows,
+ *  sharp product details, elegant background, commercial advertising quality."
+ * ============================================================================
+ */
+function generateAiProductPhoto(rawBase64Data, customPrompt, productNameHint) {
+  try {
+    if (!rawBase64Data) {
+      return {
+        success: false,
+        message: 'Data gambar mentah kosong.'
+      };
+    }
+
+    const scriptProps = PropertiesService.getScriptProperties();
+    const apiKey = (scriptProps.getProperty('GEMINI_API_KEY') || DEFAULT_GEMINI_API_KEY_ || '').trim();
+
+    if (!apiKey) {
+      return {
+        success: false,
+        code: 'NO_GEMINI_KEY',
+        message: 'API Key Gemini belum diatur di ScriptProperties.'
+      };
+    }
+
+    const cleanBase64 = rawBase64Data.replace(/^data:image\/\w+;base64,/, '');
+    const basePrompt = customPrompt ||
+      'Premium product photography, clean studio lighting, realistic shadows, sharp product details, elegant background, commercial advertising quality.';
+    const fullInstruction =
+      'Transform this product photo into: ' + basePrompt +
+      (productNameHint ? (' Product subject: ' + productNameHint + '.') : '') +
+      ' Keep the original product packaging, brand text, and shape intact and authentic while replacing the surroundings with a clean commercial studio environment, realistic floor contact shadows, and studio lighting.';
+
+    const endpoint =
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=' +
+      encodeURIComponent(apiKey);
+
+    const requestBody = {
+      contents: [
+        {
+          parts: [
+            { text: fullInstruction },
+            {
+              inline_data: {
+                mime_type: 'image/jpeg',
+                data: cleanBase64
+              }
+            }
+          ]
+        }
+      ],
+      generationConfig: {
+        responseModalities: ['TEXT', 'IMAGE']
+      }
+    };
+
+    const response = UrlFetchApp.fetch(endpoint, {
+      method: 'post',
+      contentType: 'application/json',
+      payload: JSON.stringify(requestBody),
+      muteHttpExceptions: true
+    });
+
+    const resCode = response.getResponseCode();
+    const resText = response.getContentText();
+
+    if (resCode >= 200 && resCode < 300) {
+      const json = JSON.parse(resText);
+      const candidates = json.candidates || [];
+      for (let i = 0; i < candidates.length; i++) {
+        const parts = (candidates[i].content && candidates[i].content.parts) || [];
+        for (let j = 0; j < parts.length; j++) {
+          const inlineData = parts[j].inlineData || parts[j].inline_data;
+          if (inlineData && inlineData.data) {
+            const outMime = inlineData.mimeType || inlineData.mime_type || 'image/jpeg';
+            return {
+              success: true,
+              aiBase64Image: 'data:' + outMime + ';base64,' + inlineData.data
+            };
+          }
+        }
+      }
+    }
+
+    return {
+      success: false,
+      message: 'Model AI tidak mengembalikan gambar baru (HTTP ' + resCode + ').'
+    };
+  } catch (err) {
+    return {
+      success: false,
+      message: 'Gagal memproses AI Product Photo: ' + err.message
+    };
   }
 }
 
@@ -394,6 +498,7 @@ function getPortalData(sessionUser) {
       savedDriveFolderId = extractGoogleId_(CUSTOM_DRIVE_FOLDER_ID_OR_URL);
     }
     const savedSpreadsheetId = db.ss ? db.ss.getId() : (scriptProps.getProperty('SPREADSHEET_ID') || '');
+    const hasGeminiKey = Boolean(scriptProps.getProperty('GEMINI_API_KEY') || DEFAULT_GEMINI_API_KEY_);
 
     return {
       success: true,
@@ -404,7 +509,8 @@ function getPortalData(sessionUser) {
         spreadsheetUrl: db.ss ? db.ss.getUrl() : '',
         mainDriveFolderId: savedDriveFolderId,
         mainDriveFolderUrl: savedDriveFolderId ? ('https://drive.google.com/drive/folders/' + savedDriveFolderId) : '',
-        supplierFolderUrl: currentSupplierFolderUrl
+        supplierFolderUrl: currentSupplierFolderUrl,
+        hasGeminiKey: hasGeminiKey
       }
     };
   } catch (err) {
@@ -821,7 +927,7 @@ function saveDriveSyncConfig(configPayload, sessionUser) {
 }
 
 /**
- * 8. Fungsi Diagnostik & Inisialisasi Langsung Folder Google Drive + Spreadsheet
+ * 8. Fungsi Diagnostik & Inisialisasi Langsung Folder Google Drive + Spreadsheet + Gemini API Key
  */
 function testAndInitDriveSync(configPayload, sessionUser) {
   try {
@@ -845,17 +951,22 @@ function testAndInitDriveSync(configPayload, sessionUser) {
       scriptProps.setProperty('SPREADSHEET_ID', testSs.getId());
     }
 
+    if (configPayload && configPayload.geminiApiKey) {
+      scriptProps.setProperty('GEMINI_API_KEY', String(configPayload.geminiApiKey).trim());
+    }
+
     const setupResult = setupDatabase();
 
     return {
       success: true,
-      message: 'BERHASIL! Google Drive & Spreadsheet telah aktif dan seluruh Sub-Folder Supplier sudah dibuat.',
+      message: 'BERHASIL! Google Drive, Spreadsheet & Konfigurasi AI Studio telah aktif dan seluruh Sub-Folder Supplier sudah dibuat.',
       syncInfo: {
         spreadsheetId: setupResult.spreadsheetId,
         spreadsheetUrl: setupResult.spreadsheetUrl,
         mainDriveFolderId: setupResult.mainDriveFolderId,
         mainDriveFolderUrl: setupResult.mainDriveFolderUrl,
-        subFolderCount: setupResult.subFolderCount
+        subFolderCount: setupResult.subFolderCount,
+        hasGeminiKey: Boolean(scriptProps.getProperty('GEMINI_API_KEY') || DEFAULT_GEMINI_API_KEY_)
       }
     };
   } catch (err) {
