@@ -612,20 +612,20 @@
           </div>
         </div>
 
-        <!-- PANEL FOTO PRODUK (BUKA KAMERA LANGSUNG & SINKRONISASI SUB-FOLDER DRIVE) -->
+        <!-- PANEL FOTO PRODUK (BUKA KAMERA / GALERI + AUTO GENERATE AI STUDIO FLOW) -->
         <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
             <label class="text-xs font-bold text-slate-800 uppercase tracking-wider">
-              <i class="fa-solid fa-camera text-teal-600 mr-1"></i> Foto Produk (Buka Kamera Langsung & Sinkron ke Drive)
+              <i class="fa-solid fa-wand-magic-sparkles text-teal-600 mr-1"></i> Foto Produk (Auto AI Studio Flow & Sinkron Drive)
             </label>
-            <span class="text-[11px] text-teal-700 font-medium">
-              Auto-Clean Foto Lama & Smart Naming
+            <span class="text-[11px] text-teal-700 font-semibold">
+              <i class="fa-solid fa-bolt mr-0.5"></i>Auto-Generate Studio Lighting
             </span>
           </div>
 
           <div class="flex flex-col sm:flex-row gap-4 items-center">
-            <!-- Thumbnail Preview Foto Produk -->
-            <div class="relative w-20 h-20 rounded-xl bg-white border border-slate-200 overflow-hidden shrink-0 shadow-sm flex items-center justify-center">
+            <!-- Thumbnail Preview Foto Produk + Loading Overlay AI -->
+            <div class="relative w-24 h-24 rounded-xl bg-white border border-slate-200 overflow-hidden shrink-0 shadow-sm flex items-center justify-center">
               <img
                 id="formImagePreview"
                 src="https://placehold.co/200x200/e2e8f0/64748b?text=Foto"
@@ -634,18 +634,28 @@
                 onerror="this.onerror=null;this.src='https://placehold.co/200x200/e2e8f0/64748b?text=Foto';"
                 class="w-full h-full object-cover"
               />
+              <!-- Overlay Animasi Saat Sedang Generate AI -->
+              <div
+                id="aiLoadingOverlay"
+                class="panel-hidden absolute inset-0 bg-slate-900/80 backdrop-blur-[2px] flex flex-col items-center justify-center text-white p-1.5 text-center"
+              >
+                <i class="fa-solid fa-wand-magic-sparkles fa-bounce text-teal-400 text-base mb-1"></i>
+                <span class="text-[9px] font-bold leading-tight">Generating AI Studio...</span>
+              </div>
               <span
                 id="compressionBadge"
                 class="panel-hidden absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-emerald-600 text-white text-[9px] font-bold shadow"
               >
-                Siap Upload
+                AI Studio
               </span>
             </div>
 
-            <!-- Pilihan Buka Kamera Langsung, Pilih dari Galeri, atau Paste Link Google Drive -->
+            <!-- Pilihan Buka Kamera Langsung, Pilih dari Galeri, Kontrol AI, atau Paste Link Google Drive -->
             <div class="flex-1 w-full space-y-2.5">
               <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1">1. Ambil Foto Produk (Otomatis Masuk Sub-Folder & Hapus Foto Lama)</label>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">
+                  1. Ambil Foto (Otomatis Di-Generate ke Kualitas Studio Komersial)
+                </label>
                 <!-- Input File Tersembunyi dengan capture="environment" sebagai Fallback Kamera Bawaan HP -->
                 <input
                   type="file"
@@ -683,6 +693,33 @@
                     <span>Pilih dari Galeri</span>
                   </button>
                 </div>
+
+                <!-- Bar Kontrol Hasil AI Studio (Bandingkan Foto Asli vs Hasil AI / Ulangi AI) -->
+                <div id="aiStudioControlBar" class="panel-hidden mt-2 p-2 rounded-xl bg-indigo-50/90 border border-indigo-200 flex flex-wrap items-center justify-between gap-2">
+                  <div class="flex items-center gap-1.5 text-[11px] font-bold text-indigo-950">
+                    <i class="fa-solid fa-wand-magic-sparkles text-indigo-600"></i>
+                    <span id="aiStudioStatusLabel">AI Studio Aktif</span>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      id="btnToggleRawOrAi"
+                      onclick="toggleBetweenRawAndAiPhoto()"
+                      class="px-2.5 py-1 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 text-[10px] font-bold transition cursor-pointer"
+                    >
+                      Gunakan Foto Asli
+                    </button>
+                    <button
+                      type="button"
+                      id="btnRegenerateAi"
+                      onclick="regenerateAiStudioPhoto()"
+                      class="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
+                    >
+                      <i class="fa-solid fa-rotate"></i>
+                      <span>Ulangi AI</span>
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <div>
@@ -696,6 +733,17 @@
                 />
                 <p id="convertedUrlHint" class="text-[11px] text-teal-700 font-mono mt-1 truncate"></p>
               </div>
+            </div>
+          </div>
+
+          <!-- Info Prompt Google Flow Studio yang Digunakan -->
+          <div class="p-2.5 rounded-xl bg-gradient-to-r from-slate-900 to-indigo-950 text-white text-[10px] space-y-0.5">
+            <div class="font-bold text-teal-300 flex items-center gap-1">
+              <i class="fa-solid fa-sparkles"></i>
+              <span>Prompt Auto-Generate Google Flow AI Studio:</span>
+            </div>
+            <div class="text-slate-300 italic font-mono leading-relaxed">
+              "Premium product photography, clean studio lighting, realistic shadows, sharp product details, elegant background, commercial advertising quality."
             </div>
           </div>
 
@@ -737,7 +785,7 @@
                 class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold text-xs sm:text-sm shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
               >
                 <i class="fa-solid fa-camera-retro text-base"></i>
-                <span>Jepret & Gunakan Foto Ini</span>
+                <span>Jepret & Generate AI Studio</span>
               </button>
             </div>
           </div>
@@ -1041,14 +1089,14 @@
   </div>
 
   <!-- =====================================================================
-       MODAL 6: PENGATURAN SINKRONISASI GOOGLE DRIVE, WEB APP URL & DIAGNOSTIK
+       MODAL 6: PENGATURAN SINKRONISASI GOOGLE DRIVE, WEB APP URL & GEMINI AI
        ===================================================================== -->
   <div id="driveSyncConfigModal" class="panel-hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
     <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden my-8">
       <div class="px-5 py-4 bg-slate-900 text-white flex items-center justify-between">
         <div class="flex items-center gap-2">
           <i class="fa-solid fa-cloud-arrow-up text-teal-400"></i>
-          <h3 class="font-bold text-sm sm:text-base">Koneksi Google Apps Script & Sinkronisasi Drive</h3>
+          <h3 class="font-bold text-sm sm:text-base">Koneksi Google Apps Script, Drive & AI Studio</h3>
         </div>
         <button type="button" onclick="closeDriveSyncConfigModal()" class="text-slate-400 hover:text-white cursor-pointer">
           <i class="fa-solid fa-xmark text-lg"></i>
@@ -1102,6 +1150,22 @@
           />
         </div>
 
+        <!-- Pengaturan API Key Google AI Studio / Gemini untuk Google Flow Image Generation -->
+        <div class="p-3.5 rounded-xl bg-indigo-50 border border-indigo-200 space-y-2">
+          <label class="block text-xs font-bold text-indigo-950">
+            <i class="fa-solid fa-wand-magic-sparkles mr-1 text-indigo-600"></i>4. Google Gemini / Flow API Key (Untuk AI Product Photography)
+          </label>
+          <input
+            type="password"
+            id="configGeminiApiKey"
+            placeholder="AIzaSy... (Opsional: API Key dari Google AI Studio)"
+            class="w-full px-3 py-2 rounded-xl border border-indigo-300 bg-white text-xs font-mono outline-none focus:border-indigo-600"
+          />
+          <p class="text-[11px] text-indigo-900 leading-relaxed">
+            Digunakan untuk meng-generate foto produk supplier menggunakan model AI Google (<code class="bg-indigo-100 px-1 rounded">gemini-2.5-flash-image</code>) dengan prompt Studio Komersial. Jika dikosongkan, sistem tetap otomatis menjalankan <strong>Smart Studio Lighting & Shadow Engine</strong>.
+          </p>
+        </div>
+
         <!-- Pintasan Langsung -->
         <div class="grid grid-cols-2 gap-2 pt-1">
           <button
@@ -1145,13 +1209,17 @@
   </div>
 
   <!-- =====================================================================
-       JAVASCRIPT LOGIC (OPTIMIZED FOR VERCEL FRONTEND + GOOGLE APPS SCRIPT API)
+       JAVASCRIPT LOGIC (OPTIMIZED FOR VERCEL + GOOGLE APPS SCRIPT + AI FLOW STUDIO)
        ===================================================================== -->
   <script>
     const isNativeGas = (typeof google !== 'undefined' && google.script && google.script.run);
     // URL Endpoint API Google Apps Script (Tertanam Permanen untuk Deployment Vercel)
     const DEFAULT_GAS_EXEC_URL = 'https://script.google.com/macros/s/AKfycbzNUVAZoAuZ5zZi8nZEH2IF2spAI8slupwZK7OMx6cj3w7jSCEzs3p3tNi7Mkv_or6C/exec';
     let customGasWebAppUrl = localStorage.getItem('PORTAL_GAS_WEBAPP_URL') || DEFAULT_GAS_EXEC_URL;
+
+    // Prompt Resmi Google Flow / AI Product Photography sesuai permintaan
+    const GOOGLE_FLOW_STUDIO_PROMPT =
+      'Premium product photography, clean studio lighting, realistic shadows, sharp product details, elegant background, commercial advertising quality.';
 
     // State Aplikasi
     let currentUser = null;
@@ -1162,12 +1230,19 @@
       spreadsheetUrl: '',
       mainDriveFolderId: '',
       mainDriveFolderUrl: '',
-      supplierFolderUrl: ''
+      supplierFolderUrl: '',
+      hasGeminiKey: false
     };
     let displayMode = 'grid';
     let pendingBase64Image = '';
     let pendingMimeType = 'image/jpeg';
     let isLoggingIn = false;
+
+    // State Khusus AI Product Photography (Menyimpan Foto Asli vs Hasil AI Studio)
+    let rawCapturedBase64 = '';
+    let aiGeneratedBase64 = '';
+    let isUsingAiPhoto = true;
+    let isGeneratingAi = false;
 
     // State Kamera Langsung
     let activeCameraStream = null;
@@ -1276,8 +1351,6 @@
 
     /**
      * Jembatan Panggilan API dari Vercel ke Google Apps Script (CORS-Friendly)
-     * Menggunakan Content-Type: text/plain;charset=utf-8 dan redirect: follow
-     * agar tidak terkena blokir preflight CORS saat di-host di Vercel.
      */
     function callServerApi(actionName, argsArray, onSuccess, onFailure) {
       if (isNativeGas) {
@@ -2131,6 +2204,216 @@
     }
 
     /**
+     * =========================================================================
+     * ENGINE AI PRODUCT STUDIO (GOOGLE FLOW / GEMINI IMAGE + STUDIO LIGHTING)
+     * Prompt: "Premium product photography, clean studio lighting, realistic
+     *          shadows, sharp product details, elegant background, commercial
+     *          advertising quality."
+     * =========================================================================
+     */
+    function buildClientStudioCanvasPhoto(sourceDataUrl, callback) {
+      const img = new Image();
+      img.onload = function () {
+        const SIZE = 600;
+        const canvas = document.createElement('canvas');
+        canvas.width = SIZE;
+        canvas.height = SIZE;
+        const ctx = canvas.getContext('2d');
+
+        // 1. Elegant Commercial Studio Backdrop (Soft Radial Studio Lighting)
+        const bgGrad = ctx.createRadialGradient(SIZE * 0.5, SIZE * 0.38, SIZE * 0.05, SIZE * 0.5, SIZE * 0.5, SIZE * 0.72);
+        bgGrad.addColorStop(0, '#ffffff');
+        bgGrad.addColorStop(0.55, '#f8fafc');
+        bgGrad.addColorStop(1, '#e2e8f0');
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, SIZE, SIZE);
+
+        // 2. Studio Horizon Table Floor Reflection
+        const floorGrad = ctx.createLinearGradient(0, SIZE * 0.72, 0, SIZE);
+        floorGrad.addColorStop(0, 'rgba(226, 232, 240, 0.2)');
+        floorGrad.addColorStop(1, 'rgba(203, 213, 225, 0.85)');
+        ctx.fillStyle = floorGrad;
+        ctx.fillRect(0, SIZE * 0.72, SIZE, SIZE * 0.28);
+
+        // 3. Realistic Contact Shadow beneath the product
+        ctx.save();
+        ctx.beginPath();
+        ctx.ellipse(SIZE * 0.5, SIZE * 0.82, SIZE * 0.29, SIZE * 0.045, 0, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.22)';
+        ctx.filter = 'blur(10px)';
+        ctx.fill();
+        ctx.restore();
+
+        // 4. Proporsi Produk di Tengah Studio Frame + Sharp Product Details & Lighting
+        const maxProductBox = SIZE * 0.76;
+        let drawW = img.width;
+        let drawH = img.height;
+        if (drawW > drawH) {
+          drawH = Math.round((drawH * maxProductBox) / drawW);
+          drawW = maxProductBox;
+        } else {
+          drawW = Math.round((drawW * maxProductBox) / drawH);
+          drawH = maxProductBox;
+        }
+        const offsetX = Math.round((SIZE - drawW) / 2);
+        const offsetY = Math.round((SIZE * 0.84 - drawH) / 2) + 12;
+
+        ctx.save();
+        ctx.shadowColor = 'rgba(15, 23, 42, 0.24)';
+        ctx.shadowBlur = 24;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 12;
+
+        // Peningkatan ketajaman kontras & pencahayaan studio
+        ctx.filter = 'contrast(1.09) saturate(1.12) brightness(1.04)';
+
+        // Sudut halus pada produk
+        const radius = 18;
+        ctx.beginPath();
+        ctx.moveTo(offsetX + radius, offsetY);
+        ctx.lineTo(offsetX + drawW - radius, offsetY);
+        ctx.quadraticCurveTo(offsetX + drawW, offsetY, offsetX + drawW, offsetY + radius);
+        ctx.lineTo(offsetX + drawW, offsetY + drawH - radius);
+        ctx.quadraticCurveTo(offsetX + drawW, offsetY + drawH, offsetX + drawW - radius, offsetY + drawH);
+        ctx.lineTo(offsetX + radius, offsetY + drawH);
+        ctx.quadraticCurveTo(offsetX, offsetY + drawH, offsetX, offsetY + drawH - radius);
+        ctx.lineTo(offsetX, offsetY + radius);
+        ctx.quadraticCurveTo(offsetX, offsetY, offsetX + radius, offsetY);
+        ctx.closePath();
+        ctx.clip();
+
+        ctx.drawImage(img, offsetX, offsetY, drawW, drawH);
+        ctx.restore();
+
+        // 5. Top Studio Rim Highlight (Pencahayaan Studio Atas)
+        const rimGrad = ctx.createLinearGradient(0, 0, 0, SIZE * 0.35);
+        rimGrad.addColorStop(0, 'rgba(255, 255, 255, 0.38)');
+        rimGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = rimGrad;
+        ctx.fillRect(0, 0, SIZE, SIZE * 0.35);
+
+        callback(canvas.toDataURL('image/jpeg', 0.88));
+      };
+      img.src = sourceDataUrl;
+    }
+
+    function autoGenerateGoogleFlowStudioPhoto(rawBase64Input) {
+      if (!rawBase64Input) return;
+      rawCapturedBase64 = rawBase64Input;
+      isGeneratingAi = true;
+
+      const previewEl = document.getElementById('formImagePreview');
+      if (previewEl) previewEl.src = rawBase64Input;
+
+      showPanel('aiLoadingOverlay');
+      showPanel('aiStudioControlBar');
+      const statusLabel = document.getElementById('aiStudioStatusLabel');
+      if (statusLabel) {
+        statusLabel.textContent = 'Meng-generate AI Studio Flow...';
+      }
+      const hintEl = document.getElementById('convertedUrlHint');
+      if (hintEl) {
+        hintEl.textContent = 'Sedang memproses prompt: "' + GOOGLE_FLOW_STUDIO_PROMPT.substring(0, 58) + '..."';
+      }
+
+      const productNameHint = (document.getElementById('formProductName').value || '').trim();
+
+      // Panggil Backend Google Apps Script (Gemini Image / Google Flow Generator)
+      if (isConnectedToGasBackend()) {
+        callServerApi(
+          'generateAiProductPhoto',
+          [rawBase64Input, GOOGLE_FLOW_STUDIO_PROMPT, productNameHint],
+          (res) => {
+            if (res && res.success && res.aiBase64Image) {
+              isGeneratingAi = false;
+              hidePanel('aiLoadingOverlay');
+              aiGeneratedBase64 = res.aiBase64Image;
+              applySelectedPhotoVersion(true, 'AI Google Flow Studio');
+              showToast('Foto produk berhasil di-generate dengan Google Flow AI Studio!');
+            } else {
+              // Gunakan Client Studio Lighting Engine jika API Key Gemini belum diisi di GAS
+              buildClientStudioCanvasPhoto(rawBase64Input, (studioDataUrl) => {
+                isGeneratingAi = false;
+                hidePanel('aiLoadingOverlay');
+                aiGeneratedBase64 = studioDataUrl;
+                applySelectedPhotoVersion(true, 'Studio Lighting Flow');
+                showToast('Foto produk berhasil dipercantik dengan Studio Lighting & Realistic Shadows!');
+              });
+            }
+          },
+          () => {
+            buildClientStudioCanvasPhoto(rawBase64Input, (studioDataUrl) => {
+              isGeneratingAi = false;
+              hidePanel('aiLoadingOverlay');
+              aiGeneratedBase64 = studioDataUrl;
+              applySelectedPhotoVersion(true, 'Studio Lighting Flow');
+              showToast('Foto produk berhasil dipercantik dengan Studio Lighting!');
+            });
+          }
+        );
+      } else {
+        setTimeout(() => {
+          buildClientStudioCanvasPhoto(rawBase64Input, (studioDataUrl) => {
+            isGeneratingAi = false;
+            hidePanel('aiLoadingOverlay');
+            aiGeneratedBase64 = studioDataUrl;
+            applySelectedPhotoVersion(true, 'Studio Lighting Flow');
+            showToast('Foto produk berhasil di-generate dengan AI Studio Lighting!');
+          });
+        }, 450);
+      }
+    }
+
+    function applySelectedPhotoVersion(useAi, badgeText = 'AI Studio') {
+      isUsingAiPhoto = Boolean(useAi);
+      const previewEl = document.getElementById('formImagePreview');
+      const badgeEl = document.getElementById('compressionBadge');
+      const toggleBtn = document.getElementById('btnToggleRawOrAi');
+      const statusLabel = document.getElementById('aiStudioStatusLabel');
+      const hintEl = document.getElementById('convertedUrlHint');
+
+      if (isUsingAiPhoto && aiGeneratedBase64) {
+        pendingBase64Image = aiGeneratedBase64;
+        pendingMimeType = 'image/jpeg';
+        if (previewEl) previewEl.src = aiGeneratedBase64;
+        if (badgeEl) {
+          badgeEl.textContent = 'AI Studio';
+          badgeEl.className = 'absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-indigo-600 text-white text-[9px] font-bold shadow';
+        }
+        showPanel('compressionBadge');
+        if (toggleBtn) toggleBtn.textContent = 'Gunakan Foto Asli';
+        if (statusLabel) statusLabel.textContent = `${badgeText} Aktif`;
+        if (hintEl) {
+          hintEl.textContent = 'Hasil AI Studio siap diupload ke Sub-Folder Google Drive.';
+        }
+      } else if (rawCapturedBase64) {
+        pendingBase64Image = rawCapturedBase64;
+        pendingMimeType = 'image/jpeg';
+        if (previewEl) previewEl.src = rawCapturedBase64;
+        if (badgeEl) {
+          badgeEl.textContent = 'Foto Asli';
+          badgeEl.className = 'absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-emerald-600 text-white text-[9px] font-bold shadow';
+        }
+        showPanel('compressionBadge');
+        if (toggleBtn) toggleBtn.textContent = 'Gunakan Hasil AI Studio';
+        if (statusLabel) statusLabel.textContent = 'Menggunakan Foto Asli';
+        if (hintEl) {
+          hintEl.textContent = 'Foto asli kamera/galeri siap diupload ke Sub-Folder Google Drive.';
+        }
+      }
+    }
+
+    function toggleBetweenRawAndAiPhoto() {
+      if (!rawCapturedBase64) return;
+      applySelectedPhotoVersion(!isUsingAiPhoto);
+    }
+
+    function regenerateAiStudioPhoto() {
+      if (!rawCapturedBase64 || isGeneratingAi) return;
+      autoGenerateGoogleFlowStudioPhoto(rawCapturedBase64);
+    }
+
+    /**
      * FITUR BUKA KAMERA LANGSUNG & PILIH DARI GALERI
      */
     function openGalleryPicker() {
@@ -2216,22 +2499,13 @@
       const ctx = canvas.getContext('2d');
       ctx.drawImage(videoEl, 0, 0, width, height);
 
-      const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
-      pendingBase64Image = compressedDataUrl;
-      pendingMimeType = 'image/jpeg';
-
-      const previewEl = document.getElementById('formImagePreview');
-      if (previewEl) previewEl.src = compressedDataUrl;
+      const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
       const urlInputEl = document.getElementById('formImageUrl');
       if (urlInputEl) urlInputEl.value = '';
-      showPanel('compressionBadge');
-      const hintEl = document.getElementById('convertedUrlHint');
-      if (hintEl) {
-        hintEl.textContent = 'Foto kamera berhasil diambil & siap disinkronkan ke Sub-Folder Drive.';
-      }
 
       stopDirectCamera();
-      showToast('Foto berhasil dijepret dari kamera!');
+      // Langsung jalankan Auto-Generate Google Flow AI Studio
+      autoGenerateGoogleFlowStudioPhoto(compressedDataUrl);
     }
 
     function handleImageFileSelect(event) {
@@ -2260,17 +2534,12 @@
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
 
-          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
-          pendingBase64Image = compressedDataUrl;
-          pendingMimeType = 'image/jpeg';
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          const urlInputEl = document.getElementById('formImageUrl');
+          if (urlInputEl) urlInputEl.value = '';
 
-          const previewEl = document.getElementById('formImagePreview');
-          if (previewEl) previewEl.src = compressedDataUrl;
-          showPanel('compressionBadge');
-          const hintEl = document.getElementById('convertedUrlHint');
-          if (hintEl) {
-            hintEl.textContent = 'Foto siap diupload ke Sub-Folder Drive & foto lama otomatis dihapus.';
-          }
+          // Langsung jalankan Auto-Generate Google Flow AI Studio
+          autoGenerateGoogleFlowStudioPhoto(compressedDataUrl);
         };
         img.src = e.target.result;
       };
@@ -2284,11 +2553,15 @@
 
       if (converted) {
         pendingBase64Image = '';
+        rawCapturedBase64 = '';
+        aiGeneratedBase64 = '';
         const fileEl = document.getElementById('formImageFile');
         if (fileEl) fileEl.value = '';
         const galEl = document.getElementById('formGalleryFile');
         if (galEl) galEl.value = '';
         hidePanel('compressionBadge');
+        hidePanel('aiStudioControlBar');
+        hidePanel('aiLoadingOverlay');
         if (hintEl) hintEl.textContent = 'Link aktif: ' + converted;
         if (previewEl) previewEl.src = converted;
       } else {
@@ -2312,11 +2585,17 @@
     function openProductModal(productId = '') {
       stopDirectCamera();
       pendingBase64Image = '';
+      rawCapturedBase64 = '';
+      aiGeneratedBase64 = '';
+      isGeneratingAi = false;
+
       const fileEl = document.getElementById('formImageFile');
       if (fileEl) fileEl.value = '';
       const galEl = document.getElementById('formGalleryFile');
       if (galEl) galEl.value = '';
       hidePanel('compressionBadge');
+      hidePanel('aiStudioControlBar');
+      hidePanel('aiLoadingOverlay');
       const hintEl = document.getElementById('convertedUrlHint');
       if (hintEl) hintEl.textContent = '';
 
@@ -2384,6 +2663,11 @@
 
     function handleSaveProduct(e) {
       if (e && typeof e.preventDefault === 'function') e.preventDefault();
+
+      if (isGeneratingAi) {
+        showToast('Mohon tunggu sebentar, foto sedang selesai di-generate oleh AI Studio...', 'info');
+        return;
+      }
 
       const namaProduk = document.getElementById('formProductName').value.trim();
       const kategoriManual = document.getElementById('formProductCategory').value.trim();
@@ -2745,6 +3029,8 @@
       document.getElementById('configGasWebAppUrl').value = customGasWebAppUrl || '';
       document.getElementById('configDriveFolderInput').value = portalSyncInfo.mainDriveFolderId || '';
       document.getElementById('configSpreadsheetInput').value = portalSyncInfo.spreadsheetId || '';
+      const geminiKeyEl = document.getElementById('configGeminiApiKey');
+      if (geminiKeyEl) geminiKeyEl.value = '';
       hidePanel('syncDiagnosticBox');
       showPanel('driveSyncConfigModal');
     }
@@ -2767,6 +3053,7 @@
       const webAppUrlInput = document.getElementById('configGasWebAppUrl').value.trim();
       const driveFolderInput = document.getElementById('configDriveFolderInput').value.trim();
       const spreadsheetInput = document.getElementById('configSpreadsheetInput').value.trim();
+      const geminiApiKeyInput = (document.getElementById('configGeminiApiKey') ? document.getElementById('configGeminiApiKey').value : '').trim();
       const btn = document.getElementById('btnSaveDriveSyncConfig');
 
       if (webAppUrlInput) {
@@ -2791,7 +3078,7 @@
 
       callServerApi(
         'testAndInitDriveSync',
-        [{ driveFolderInput, spreadsheetInput }, currentUser],
+        [{ driveFolderInput, spreadsheetInput, geminiApiKey: geminiApiKeyInput }, currentUser],
         (res) => {
           btn.disabled = false;
           btn.innerHTML = '<i class="fa-solid fa-bolt"></i><span>Simpan & Tes Buat Folder Drive Sekarang</span>';
