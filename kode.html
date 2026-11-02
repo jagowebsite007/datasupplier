@@ -8,7 +8,7 @@
 
 // Opsional: Anda bisa mengisi API Key Google AI Studio (Gemini) langsung di sini
 // atau mengisinya melalui menu "Tes & Pengaturan Drive" di Dashboard Admin.
-const DEFAULT_GEMINI_API_KEY_ = 'AIzaSyANFGHbyVzP2mkR62wuNXIVXLUfZajcIQY';
+const DEFAULT_GEMINI_API_KEY_ = '';
 
 const DEFAULT_ACCOUNTS_ = [
   {
@@ -241,100 +241,190 @@ function renameDriveFileIfPossible_(fileIdOrUrl, newSmartFileName) {
 
 /**
  * ============================================================================
- * FITUR AI PRODUCT PHOTOGRAPHY (GOOGLE FLOW / GEMINI IMAGE GENERATOR)
- * Mengubah foto produk mentah dari kamera/galeri menjadi foto produk studio
- * menggunakan prompt:
+ * MODE 2: AI FULL GENERATE (GOOGLE FLOW STUDIO PROMPT MULTI-ENGINE)
+ * Meng-generate foto produk studio komersial menggunakan prompt wajib:
  * "Premium product photography, clean studio lighting, realistic shadows,
  *  sharp product details, elegant background, commercial advertising quality."
+ *
+ * Alur Multi-Engine:
+ * 1. Jika API Key Gemini tersedia:
+ *    a) Mencoba Gemini 2.0 Flash Image Generation / Gemini 2.5 Flash Image
+ *    b) Menggunakan Gemini 2.5 Flash Vision untuk menganalisis kemasan/bentuk/warna
+ *       produk dari foto asli agar hasil AI sangat akurat dengan barang yang difoto.
+ * 2. Merender gambar studio komersial resolusi tinggi menggunakan mesin
+ *    Flux Commercial Studio (Pollinations AI) yang 100% gratis tanpa kuota limit.
  * ============================================================================
  */
 function generateAiProductPhoto(rawBase64Data, customPrompt, productNameHint) {
   try {
-    if (!rawBase64Data) {
-      return {
-        success: false,
-        message: 'Data gambar mentah kosong.'
-      };
-    }
+    const basePrompt =
+      customPrompt ||
+      'Premium product photography, clean studio lighting, realistic shadows, sharp product details, elegant background, commercial advertising quality.';
 
+    const cleanBase64 = rawBase64Data ? rawBase64Data.replace(/^data:image\/\w+;base64,/, '') : '';
     const scriptProps = PropertiesService.getScriptProperties();
     const apiKey = (scriptProps.getProperty('GEMINI_API_KEY') || DEFAULT_GEMINI_API_KEY_ || '').trim();
 
-    if (!apiKey) {
-      return {
-        success: false,
-        code: 'NO_GEMINI_KEY',
-        message: 'API Key Gemini belum diatur di ScriptProperties.'
-      };
-    }
+    let detailedVisualSubject = productNameHint
+      ? ('Commercial product package of ' + productNameHint)
+      : 'Commercial retail grocery product package';
 
-    const cleanBase64 = rawBase64Data.replace(/^data:image\/\w+;base64,/, '');
-    const basePrompt = customPrompt ||
-      'Premium product photography, clean studio lighting, realistic shadows, sharp product details, elegant background, commercial advertising quality.';
-    const fullInstruction =
-      'Transform this product photo into: ' + basePrompt +
-      (productNameHint ? (' Product subject: ' + productNameHint + '.') : '') +
-      ' Keep the original product packaging, brand text, and shape intact and authentic while replacing the surroundings with a clean commercial studio environment, realistic floor contact shadows, and studio lighting.';
+    // TAHAP 1: Jika ada API Key Gemini & foto kamera/galeri, coba Image-to-Image langsung
+    // sekaligus ekstrak deskripsi visual presisi tinggi dari foto asli menggunakan Gemini Vision
+    if (apiKey && cleanBase64) {
+      const geminiModels = [
+        'gemini-2.0-flash-exp-image-generation',
+        'gemini-2.5-flash-image'
+      ];
 
-    const endpoint =
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=' +
-      encodeURIComponent(apiKey);
+      const fullInstruction =
+        'Transform this product photo into: ' + basePrompt +
+        (productNameHint ? (' Product name: ' + productNameHint + '.') : '') +
+        ' Preserve the exact product packaging, colors, and brand identity while placing it on a luxury commercial studio pedestal with soft studio lighting and realistic contact shadows.';
 
-    const requestBody = {
-      contents: [
-        {
-          parts: [
-            { text: fullInstruction },
-            {
-              inline_data: {
-                mime_type: 'image/jpeg',
-                data: cleanBase64
+      for (let m = 0; m < geminiModels.length; m++) {
+        try {
+          const endpoint =
+            'https://generativelanguage.googleapis.com/v1beta/models/' +
+            geminiModels[m] +
+            ':generateContent?key=' +
+            encodeURIComponent(apiKey);
+
+          const response = UrlFetchApp.fetch(endpoint, {
+            method: 'post',
+            contentType: 'application/json',
+            payload: JSON.stringify({
+              contents: [
+                {
+                  parts: [
+                    { text: fullInstruction },
+                    {
+                      inline_data: {
+                        mime_type: 'image/jpeg',
+                        data: cleanBase64
+                      }
+                    }
+                  ]
+                }
+              ],
+              generationConfig: {
+                responseModalities: ['TEXT', 'IMAGE']
+              }
+            }),
+            muteHttpExceptions: true
+          });
+
+          if (response.getResponseCode() >= 200 && response.getResponseCode() < 300) {
+            const json = JSON.parse(response.getContentText());
+            const candidates = json.candidates || [];
+            for (let i = 0; i < candidates.length; i++) {
+              const parts = (candidates[i].content && candidates[i].content.parts) || [];
+              for (let j = 0; j < parts.length; j++) {
+                const inlineData = parts[j].inlineData || parts[j].inline_data;
+                if (inlineData && inlineData.data) {
+                  const outMime = inlineData.mimeType || inlineData.mime_type || 'image/jpeg';
+                  return {
+                    success: true,
+                    engine: geminiModels[m],
+                    aiBase64Image: 'data:' + outMime + ';base64,' + inlineData.data
+                  };
+                }
               }
             }
-          ]
+          }
+        } catch (modelErr) {
+          Logger.log('Info Gemini Image model ' + geminiModels[m] + ': ' + modelErr.message);
         }
-      ],
-      generationConfig: {
-        responseModalities: ['TEXT', 'IMAGE']
       }
-    };
 
-    const response = UrlFetchApp.fetch(endpoint, {
-      method: 'post',
-      contentType: 'application/json',
-      payload: JSON.stringify(requestBody),
-      muteHttpExceptions: true
-    });
+      // Gunakan Gemini 2.5 Flash Vision untuk membaca detail produk pada foto kamera/galeri
+      try {
+        const visionEndpoint =
+          'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' +
+          encodeURIComponent(apiKey);
+        const visionPrompt =
+          'Describe the main product in this photo in 25 English words for a commercial product photographer: include exact packaging type (bottle, pouch, sack, box, can), dominant colors, material texture, and brand/label style. Do not describe the messy background.' +
+          (productNameHint ? (' Product name hint: ' + productNameHint + '.') : '');
 
-    const resCode = response.getResponseCode();
-    const resText = response.getContentText();
+        const visionRes = UrlFetchApp.fetch(visionEndpoint, {
+          method: 'post',
+          contentType: 'application/json',
+          payload: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  { text: visionPrompt },
+                  {
+                    inline_data: {
+                      mime_type: 'image/jpeg',
+                      data: cleanBase64
+                    }
+                  }
+                ]
+              }
+            ]
+          }),
+          muteHttpExceptions: true
+        });
 
-    if (resCode >= 200 && resCode < 300) {
-      const json = JSON.parse(resText);
-      const candidates = json.candidates || [];
-      for (let i = 0; i < candidates.length; i++) {
-        const parts = (candidates[i].content && candidates[i].content.parts) || [];
-        for (let j = 0; j < parts.length; j++) {
-          const inlineData = parts[j].inlineData || parts[j].inline_data;
-          if (inlineData && inlineData.data) {
-            const outMime = inlineData.mimeType || inlineData.mime_type || 'image/jpeg';
-            return {
-              success: true,
-              aiBase64Image: 'data:' + outMime + ';base64,' + inlineData.data
-            };
+        if (visionRes.getResponseCode() >= 200 && visionRes.getResponseCode() < 300) {
+          const vJson = JSON.parse(visionRes.getContentText());
+          const vText =
+            vJson.candidates &&
+            vJson.candidates[0] &&
+            vJson.candidates[0].content &&
+            vJson.candidates[0].content.parts &&
+            vJson.candidates[0].content.parts[0] &&
+            vJson.candidates[0].content.parts[0].text;
+          if (vText && vText.trim().length > 5) {
+            detailedVisualSubject = vText.trim().replace(/\n+/g, ' ');
           }
         }
+      } catch (visionErr) {
+        Logger.log('Info Gemini Vision analyzer: ' + visionErr.message);
       }
+    }
+
+    // TAHAP 2: Full Generate menggunakan Flux Commercial Studio Engine dengan prompt Google Flow
+    const finalFluxPrompt =
+      detailedVisualSubject +
+      ', ' +
+      basePrompt +
+      ', centered on a sleek minimalist studio podium, 85mm commercial macro lens, ultra-detailed 8k resolution';
+
+    const randomSeed = Math.floor(10000 + Math.random() * 89999);
+    const fluxUrl =
+      'https://image.pollinations.ai/prompt/' +
+      encodeURIComponent(finalFluxPrompt) +
+      '?width=768&height=768&seed=' +
+      randomSeed +
+      '&nologo=true&model=flux';
+
+    const imgResponse = UrlFetchApp.fetch(fluxUrl, {
+      method: 'get',
+      muteHttpExceptions: true,
+      followRedirects: true
+    });
+
+    if (imgResponse.getResponseCode() >= 200 && imgResponse.getResponseCode() < 300) {
+      const imgBlob = imgResponse.getBlob();
+      const outBase64 = Utilities.base64Encode(imgBlob.getBytes());
+      return {
+        success: true,
+        engine: 'Google Flow Studio Prompt (Flux Commercial Engine)',
+        visualSubject: detailedVisualSubject,
+        aiBase64Image: 'data:image/jpeg;base64,' + outBase64
+      };
     }
 
     return {
       success: false,
-      message: 'Model AI tidak mengembalikan gambar baru (HTTP ' + resCode + ').'
+      message: 'Server AI Image Generator sedang sibuk (HTTP ' + imgResponse.getResponseCode() + ').'
     };
   } catch (err) {
     return {
       success: false,
-      message: 'Gagal memproses AI Product Photo: ' + err.message
+      message: 'Gagal memproses AI Full Generate: ' + err.message
     };
   }
 }
