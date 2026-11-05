@@ -59,7 +59,7 @@ function doGet(e) {
 
   try {
     return HtmlService.createHtmlOutputFromFile('index')
-      .setTitle('Portal Pendataan Harga Supplier')
+      .setTitle('Pendataan Harga Mitra')
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
       .addMetaTag('viewport', 'width=device-width, initial-scale=1.0');
   } catch (noHtmlErr) {
@@ -90,6 +90,9 @@ function doPost(e) {
     switch (action) {
       case 'loginUser':
         result = loginUser(args[0], args[1]);
+        break;
+      case 'registerMitraAccount':
+        result = registerMitraAccount(args[0]);
         break;
       case 'getPortalData':
         result = getPortalData(args[0]);
@@ -187,7 +190,7 @@ function formatCellDate_(val) {
 
 /**
  * Membuat nama file foto otomatis yang sinkron dengan data produk
- * Format: [SKU]_[Nama_Produk]_Modal-[HargaSupplier]_Jual-[HargaJual]_Stok-[TotalStok].jpg
+ * Format: [SKU]_[Nama_Produk]_Modal-[HargaMitra]_Jual-[HargaJual]_Stok-[TotalStok].jpg
  */
 function buildSmartFileName_(payload) {
   const cleanSku = String(payload.kode_sku || 'SKU')
@@ -245,14 +248,6 @@ function renameDriveFileIfPossible_(fileIdOrUrl, newSmartFileName) {
  * Meng-generate foto produk studio komersial menggunakan prompt wajib:
  * "Premium product photography, clean studio lighting, realistic shadows,
  *  sharp product details, elegant background, commercial advertising quality."
- *
- * Alur Multi-Engine:
- * 1. Jika API Key Gemini tersedia:
- *    a) Mencoba Gemini 2.0 Flash Image Generation / Gemini 2.5 Flash Image
- *    b) Menggunakan Gemini 2.5 Flash Vision untuk menganalisis kemasan/bentuk/warna
- *       produk dari foto asli agar hasil AI sangat akurat dengan barang yang difoto.
- * 2. Merender gambar studio komersial resolusi tinggi menggunakan mesin
- *    Flux Commercial Studio (Pollinations AI) yang 100% gratis tanpa kuota limit.
  * ============================================================================
  */
 function generateAiProductPhoto(rawBase64Data, customPrompt, productNameHint) {
@@ -269,8 +264,6 @@ function generateAiProductPhoto(rawBase64Data, customPrompt, productNameHint) {
       ? ('Commercial product package of ' + productNameHint)
       : 'Commercial retail grocery product package';
 
-    // TAHAP 1: Jika ada API Key Gemini & foto kamera/galeri, coba Image-to-Image langsung
-    // sekaligus ekstrak deskripsi visual presisi tinggi dari foto asli menggunakan Gemini Vision
     if (apiKey && cleanBase64) {
       const geminiModels = [
         'gemini-2.0-flash-exp-image-generation',
@@ -337,7 +330,6 @@ function generateAiProductPhoto(rawBase64Data, customPrompt, productNameHint) {
         }
       }
 
-      // Gunakan Gemini 2.5 Flash Vision untuk membaca detail produk pada foto kamera/galeri
       try {
         const visionEndpoint =
           'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' +
@@ -385,7 +377,6 @@ function generateAiProductPhoto(rawBase64Data, customPrompt, productNameHint) {
       }
     }
 
-    // TAHAP 2: Full Generate menggunakan Flux Commercial Studio Engine dengan prompt Google Flow
     const finalFluxPrompt =
       detailedVisualSubject +
       ', ' +
@@ -430,7 +421,7 @@ function generateAiProductPhoto(rawBase64Data, customPrompt, productNameHint) {
 }
 
 /**
- * 1. Fungsi Login Multi-User (Supplier & Admin)
+ * 1. Fungsi Login Multi-User (Mitra & Admin)
  */
 function loginUser(username, password) {
   const cleanUser = String(username || '').trim().toLowerCase().replace(/\s+/g, '');
@@ -451,7 +442,7 @@ function loginUser(username, password) {
         if (statusAktif.toLowerCase() !== 'aktif') {
           return {
             success: false,
-            message: 'Akun supplier Anda sedang dinonaktifkan oleh Admin.'
+            message: 'Akun Mitra Anda sedang dinonaktifkan oleh Admin.'
           };
         }
 
@@ -498,7 +489,99 @@ function loginUser(username, password) {
 }
 
 /**
- * 2. Ambil Data Produk, Supplier & Info Sinkronisasi Google Drive
+ * 1B. Fungsi Pendaftaran Mandiri Mitra Baru (Daftar Jadi Mitra)
+ * Semua kolom wajib diisi: Nama Toko, Username, Password, No WhatsApp, Alamat Lengkap
+ */
+function registerMitraAccount(regPayload) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+
+  try {
+    if (!regPayload) {
+      throw new Error('Data pendaftaran tidak lengkap.');
+    }
+
+    const namaToko = String(regPayload.nama_supplier || '').trim();
+    const username = String(regPayload.username || '').trim().replace(/\s+/g, '');
+    const password = String(regPayload.password || '').trim();
+    const kontakWa = String(regPayload.kontak_wa || '').trim();
+    const alamat = String(regPayload.alamat || '').trim();
+
+    if (!namaToko || !username || !password || !kontakWa || !alamat) {
+      return {
+        success: false,
+        message: 'Semua kolom (Nama Toko, User Login, Password, No. WhatsApp, dan Alamat Lengkap) wajib diisi!'
+      };
+    }
+
+    const db = ensureDatabaseReady_();
+    const sheet = db.sheetSuppliers;
+    const data = sheet.getDataRange().getValues();
+    const cleanUserLower = username.toLowerCase();
+
+    for (let i = 1; i < data.length; i++) {
+      const existingUser = String(data[i][1] || '').trim().toLowerCase().replace(/\s+/g, '');
+      if (existingUser === cleanUserLower) {
+        return {
+          success: false,
+          message: 'User Login "' + username + '" sudah terdaftar. Silakan gunakan User Login lain.'
+        };
+      }
+    }
+
+    const now = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+    const newMitraId = 'MTR-' + String(Math.floor(100 + Math.random() * 900));
+    let newFolderUrl = '';
+
+    if (typeof getOrCreateSupplierSubFolder_ === 'function') {
+      try {
+        const subFolder = getOrCreateSupplierSubFolder_(newMitraId, namaToko);
+        newFolderUrl = subFolder.getUrl();
+      } catch (e) {
+        Logger.log('Info buat sub-folder Mitra baru: ' + e.message);
+      }
+    }
+
+    const newRow = [
+      newMitraId,
+      username,
+      password,
+      namaToko,
+      'supplier',
+      kontakWa,
+      alamat,
+      'Aktif',
+      now,
+      newFolderUrl
+    ];
+
+    sheet.appendRow(newRow);
+
+    return {
+      success: true,
+      message: 'Pendaftaran Mitra "' + namaToko + '" berhasil! Anda kini dapat langsung masuk.',
+      user: {
+        id_supplier: newMitraId,
+        username: username,
+        nama_supplier: namaToko,
+        role: 'supplier',
+        kontak_wa: kontakWa,
+        alamat: alamat,
+        folder_drive_url: newFolderUrl
+      }
+    };
+  } catch (err) {
+    return {
+      success: false,
+      message: 'Gagal mendaftarkan Mitra: ' + err.message
+    };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/**
+ * 2. Ambil Data Produk, Mitra & Info Sinkronisasi Google Drive
  */
 function getPortalData(sessionUser) {
   try {
@@ -612,7 +695,7 @@ function getPortalData(sessionUser) {
 }
 
 /**
- * 3. Upload File Base64 ke Sub-Folder Google Drive milik Supplier terkait
+ * 3. Upload File Base64 ke Sub-Folder Google Drive milik Mitra terkait
  */
 function uploadImageToSupplierDrive_(base64Data, fileName, mimeType, idSupplier, namaSupplier) {
   let targetFolder = null;
@@ -761,7 +844,7 @@ function saveProductData(payload, sessionUser) {
         const row = data[i];
         if (String(row[0]) === String(payload.id_produk)) {
           if (!isAdmin && String(row[1]) !== String(sessionUser.id_supplier)) {
-            throw new Error('Anda tidak memiliki izin untuk mengubah produk milik supplier lain.');
+            throw new Error('Anda tidak memiliki izin untuk mengubah produk milik Mitra lain.');
           }
 
           const oldPhotoUrlInSheet = String(row[12] || '');
@@ -916,12 +999,12 @@ function deleteProductData(idProduk, sessionUser) {
 }
 
 /**
- * 7. Kelola Akun Login Supplier & Otomatis Buat/Update Sub-Folder di Google Drive
+ * 7. Kelola Akun Login Mitra & Otomatis Buat/Update Sub-Folder di Google Drive
  */
 function saveSupplierAccount(supPayload, sessionUser) {
   try {
     if (!sessionUser || String(sessionUser.role || '').toLowerCase() !== 'admin') {
-      throw new Error('Hanya Admin yang dapat mengelola akun login supplier.');
+      throw new Error('Hanya Admin yang dapat mengelola akun login Mitra.');
     }
 
     const db = ensureDatabaseReady_();
@@ -959,7 +1042,7 @@ function saveSupplierAccount(supPayload, sessionUser) {
           sheet.getRange(i + 1, 1, 1, updated.length).setValues([updated]);
           return {
             success: true,
-            message: 'Akun supplier & Sub-Folder Google Drive berhasil diperbarui.'
+            message: 'Akun Mitra & Sub-Folder Google Drive berhasil diperbarui.'
           };
         }
       }
@@ -975,7 +1058,7 @@ function saveSupplierAccount(supPayload, sessionUser) {
       }
     }
 
-    const newSupId = 'SUP-' + String(Math.floor(100 + Math.random() * 900));
+    const newSupId = 'MTR-' + String(Math.floor(100 + Math.random() * 900));
     const newSupName = String(supPayload.nama_supplier).trim();
     let newFolderUrl = '';
 
@@ -1002,7 +1085,7 @@ function saveSupplierAccount(supPayload, sessionUser) {
     sheet.appendRow(newRow);
     return {
       success: true,
-      message: 'Akun supplier (' + newSupId + ') & Sub-Folder Google Drive berhasil dibuat!'
+      message: 'Akun Mitra (' + newSupId + ') & Sub-Folder Google Drive berhasil dibuat!'
     };
   } catch (err) {
     return {
@@ -1049,7 +1132,7 @@ function testAndInitDriveSync(configPayload, sessionUser) {
 
     return {
       success: true,
-      message: 'BERHASIL! Google Drive, Spreadsheet & Konfigurasi AI Studio telah aktif dan seluruh Sub-Folder Supplier sudah dibuat.',
+      message: 'BERHASIL! Google Drive, Spreadsheet & Konfigurasi AI Studio telah aktif dan seluruh Sub-Folder Mitra sudah dibuat.',
       syncInfo: {
         spreadsheetId: setupResult.spreadsheetId,
         spreadsheetUrl: setupResult.spreadsheetUrl,
