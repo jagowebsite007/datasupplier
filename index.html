@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="referrer" content="no-referrer" />
-  <title>Portal Harga Supplier — Google Drive Sync</title>
+  <title>Pendataan Harga Mitra</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
@@ -67,7 +67,7 @@
   <div id="toastContainer" class="fixed top-4 right-4 z-[999] flex flex-col gap-2.5 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
 
   <!-- =========================================================================
-       VIEW 1: LOGIN SCREEN (PORTAL LOGIN SUPPLIER & ADMIN)
+       VIEW 1: LOGIN SCREEN (PORTAL LOGIN MITRA & ADMIN)
        ========================================================================= -->
   <div id="loginView" class="min-h-screen flex flex-col justify-center items-center p-4 sm:p-6 bg-gradient-to-br from-teal-950 via-slate-900 to-slate-950 relative overflow-hidden">
     <div class="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-teal-500/15 blur-3xl pointer-events-none"></div>
@@ -81,14 +81,10 @@
           </div>
           <div>
             <span class="text-[11px] font-bold uppercase tracking-widest text-teal-600 dark:text-teal-400 block">Self-Service Portal</span>
-            <h1 class="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">Pendataan Harga Supplier</h1>
+            <h1 class="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">Pendataan Harga Mitra</h1>
           </div>
         </div>
       </div>
-
-      <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-5 leading-relaxed">
-        Silakan login menggunakan akun masing-masing supplier untuk memperbarui <strong>Harga Supplier</strong>, <strong>Harga Jual</strong>, <strong>Total Stok</strong>, dan upload foto produk ke <strong>Sub-Folder Google Drive</strong>.
-      </p>
 
       <div id="loginAlertBox" class="panel-hidden mb-4 p-3.5 rounded-2xl text-xs font-semibold border items-center gap-2.5">
         <i id="loginAlertIcon" class="fa-solid fa-circle-info text-sm shrink-0"></i>
@@ -98,14 +94,14 @@
       <!-- Form Login -->
       <div class="space-y-4">
         <div>
-          <label for="loginUsername" class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">Username Supplier / Admin</label>
+          <label for="loginUsername" class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">Username Mitra / Admin</label>
           <div class="relative">
             <i class="fa-regular fa-user absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
             <input
               id="loginUsername"
               type="text"
               autocomplete="username"
-              placeholder="Contoh: supplier1"
+              placeholder="Masukkan username Mitra"
               onkeydown="if(event.key==='Enter'){event.preventDefault();submitLoginForm();}"
               class="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-500 transition"
             />
@@ -145,10 +141,132 @@
           <i class="fa-solid fa-arrow-right-to-bracket"></i>
         </button>
 
-        <div class="pt-3 text-center">
+        <!-- Tombol Daftar Jadi Mitra -->
+        <button
+          type="button"
+          onclick="openRegisterMitraModal()"
+          class="w-full py-3 px-5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-teal-700 dark:text-teal-300 border border-teal-500/30 font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 transition cursor-pointer"
+        >
+          <i class="fa-solid fa-store"></i>
+          <span>Daftar Jadi Mitra</span>
+        </button>
+
+        <div class="pt-2 text-center">
           <p class="text-xs font-bold tracking-wide text-slate-500 dark:text-slate-400">
             Powered by <span class="text-teal-600 dark:text-teal-400">JagoWeb</span> - 08215075520
           </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL PENDAFTARAN MANDIRI: DAFTAR JADI MITRA
+       ========================================================================= -->
+  <div id="registerMitraModal" class="panel-hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm overflow-y-auto">
+    <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-8">
+      <div class="px-6 py-4 bg-gradient-to-r from-teal-700 to-teal-500 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center">
+            <i class="fa-solid fa-store text-base"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-base">Daftar Jadi Mitra</h3>
+            <p class="text-[11px] text-teal-100">Lengkapi data toko untuk membuat akun Mitra</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeRegisterMitraModal()" class="w-8 h-8 rounded-lg text-teal-100 hover:text-white hover:bg-white/10 flex items-center justify-center cursor-pointer">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-3.5 max-h-[82vh] overflow-y-auto">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">Nama Toko / Usaha Mitra *</label>
+          <div class="relative">
+            <i class="fa-solid fa-shop absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <input
+              id="regNamaToko"
+              type="text"
+              required
+              placeholder="Contoh: Toko Berkah Mandiri"
+              class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">User Login *</label>
+            <div class="relative">
+              <i class="fa-regular fa-user absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+              <input
+                id="regUsername"
+                type="text"
+                required
+                placeholder="Contoh: berkah01"
+                class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-teal-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">Password *</label>
+            <div class="relative">
+              <i class="fa-solid fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+              <input
+                id="regPassword"
+                type="text"
+                required
+                placeholder="Minimal 4 karakter"
+                class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-teal-500"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">No. WhatsApp (Wajib Diisi) *</label>
+          <div class="relative">
+            <i class="fa-brands fa-whatsapp absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-500 text-sm"></i>
+            <input
+              id="regKontakWa"
+              type="tel"
+              required
+              placeholder="Contoh: 081234567890"
+              class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">Alamat Lengkap (Wajib Diisi) *</label>
+          <textarea
+            id="regAlamat"
+            rows="2"
+            required
+            placeholder="Masukkan alamat lengkap toko / lokasi usaha Mitra..."
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-500"
+          ></textarea>
+        </div>
+
+        <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-200 dark:border-slate-800">
+          <button
+            type="button"
+            onclick="closeRegisterMitraModal()"
+            class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 cursor-pointer"
+          >
+            Batal
+          </button>
+          <button
+            id="btnSubmitRegisterMitra"
+            type="button"
+            onclick="submitRegisterMitraForm()"
+            class="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-teal-600/25 flex items-center gap-2 cursor-pointer"
+          >
+            <i class="fa-solid fa-user-check"></i>
+            <span>Daftar & Masuk</span>
+          </button>
         </div>
       </div>
     </div>
@@ -167,10 +285,10 @@
           </div>
           <div class="truncate">
             <div class="flex items-center gap-2">
-              <h2 id="headerSupplierName" class="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white truncate">Nama Supplier</h2>
-              <span id="headerRoleBadge" class="px-2 py-0.5 text-[10px] font-extrabold uppercase rounded-full bg-teal-100 text-teal-800 dark:bg-teal-900/60 dark:text-teal-300">SUPPLIER</span>
+              <h2 id="headerSupplierName" class="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white truncate">Nama Mitra</h2>
+              <span id="headerRoleBadge" class="px-2 py-0.5 text-[10px] font-extrabold uppercase rounded-full bg-teal-100 text-teal-800 dark:bg-teal-900/60 dark:text-teal-300">MITRA</span>
             </div>
-            <p id="headerSupplierMeta" class="text-[11px] text-slate-500 dark:text-slate-400 truncate">ID: SUP-001</p>
+            <p id="headerSupplierMeta" class="text-[11px] text-slate-500 dark:text-slate-400 truncate">ID: MTR-001</p>
           </div>
         </div>
 
@@ -190,10 +308,10 @@
             type="button"
             onclick="openSupplierManagerModal()"
             class="panel-hidden px-3 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-300 border border-amber-500/30 font-bold text-xs sm:text-sm items-center gap-1.5 transition cursor-pointer"
-            title="Kelola Akun Login Supplier (Khusus Admin)"
+            title="Kelola Akun Login Mitra (Khusus Admin)"
           >
             <i class="fa-solid fa-users-gear"></i>
-            <span class="hidden md:inline">Akun Supplier</span>
+            <span class="hidden md:inline">Akun Mitra</span>
           </button>
 
           <button
@@ -235,7 +353,7 @@
           <div class="flex flex-wrap items-center gap-2">
             <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-teal-500/20 text-teal-300 border border-teal-400/30 flex items-center gap-1.5">
               <i class="fa-brands fa-google-drive"></i>
-              <span id="driveSyncStatusBadge">Sub-Folder Drive Otomatis per Supplier</span>
+              <span id="driveSyncStatusBadge">Sub-Folder Drive Otomatis per Mitra</span>
             </span>
             <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-400/30">
               <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>AI Full Generate (Google Flow Mode 2)
@@ -243,7 +361,7 @@
           </div>
           <h3 class="text-sm sm:text-base font-bold text-white">Sinkronisasi Penuh Google Drive & Spreadsheet</h3>
           <p class="text-xs text-slate-300 leading-relaxed">
-            Setiap foto dari kamera/galeri otomatis di-generate ulang oleh AI menggunakan prompt studio komersial dan disimpan ke Sub-Folder Drive masing-masing Supplier (<code class="text-teal-300 font-mono">lh3.googleusercontent.com</code>).
+            Setiap foto dari kamera/galeri otomatis di-generate ulang oleh AI menggunakan prompt studio komersial dan disimpan ke Sub-Folder Drive masing-masing Mitra (<code class="text-teal-300 font-mono">lh3.googleusercontent.com</code>).
           </p>
         </div>
         <div class="flex flex-wrap items-center gap-2 shrink-0">
@@ -346,7 +464,7 @@
             onchange="renderProducts()"
             class="panel-hidden px-3 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs sm:text-sm font-bold focus:outline-none focus:ring-2 focus:ring-amber-500"
           >
-            <option value="ALL">Semua Supplier (Mode Admin)</option>
+            <option value="ALL">Semua Mitra (Mode Admin)</option>
           </select>
         </div>
 
@@ -390,7 +508,7 @@
         </div>
         <h3 class="text-base font-bold text-slate-800 dark:text-slate-100">Belum Ada Data Produk yang Cocok</h3>
         <p class="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto mt-1 mb-5">
-          Tambahkan produk baru lengkap dengan Harga Supplier, Harga Jual, Total Stok, dan foto produk yang otomatis masuk ke Sub-Folder Google Drive Anda.
+          Tambahkan produk baru lengkap dengan Harga Mitra, Harga Jual, Total Stok, dan foto produk yang otomatis masuk ke Sub-Folder Google Drive Anda.
         </p>
         <button
           type="button"
@@ -413,8 +531,8 @@
               <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/50 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
                 <th class="py-3.5 px-4">Produk & Foto</th>
                 <th class="py-3.5 px-3">Kategori</th>
-                <th class="py-3.5 px-3">Harga Supplier (Modal)</th>
-                <th class="py-3.5 px-3">Harga Jual Supplier</th>
+                <th class="py-3.5 px-3">Harga Mitra (Modal)</th>
+                <th class="py-3.5 px-3">Harga Jual Mitra</th>
                 <th class="py-3.5 px-3">Margin</th>
                 <th class="py-3.5 px-3">Total Stok</th>
                 <th class="py-3.5 px-3">Update Terakhir</th>
@@ -439,7 +557,7 @@
             <i class="fa-solid fa-pen-to-square"></i>
           </div>
           <div>
-            <h3 id="productModalTitle" class="font-extrabold text-base text-slate-900 dark:text-white">Tambah Produk Supplier</h3>
+            <h3 id="productModalTitle" class="font-extrabold text-base text-slate-900 dark:text-white">Tambah Produk Mitra</h3>
             <p class="text-[11px] text-slate-500">Foto dari kamera/galeri otomatis di-generate dengan AI Studio (Mode 2: Google Flow Prompt)</p>
           </div>
         </div>
@@ -451,7 +569,7 @@
       <div class="p-6 space-y-4 max-h-[82vh] overflow-y-auto">
         <input type="hidden" id="formIdProduk" />
 
-        <!-- Pilih Supplier (Khusus Admin) -->
+        <!-- Pilih Mitra (Khusus Admin) -->
         <div id="adminSupplierSelectWrap" class="panel-hidden p-3.5 rounded-2xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60">
           <label class="block text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300 mb-1">Pemilik Produk (Mode Admin) — Menentukan Sub-Folder Drive</label>
           <select id="formSupplierOwner" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-amber-300 dark:border-amber-700 text-xs sm:text-sm font-semibold"></select>
@@ -512,12 +630,12 @@
           </div>
         </div>
 
-        <!-- Baris 3: Harga dari Supplier (Modal) & Harga Jual dari Supplier -->
+        <!-- Baris 3: Harga dari Mitra (Modal) & Harga Jual dari Mitra -->
         <div class="p-4 rounded-2xl bg-teal-50/60 dark:bg-teal-950/30 border border-teal-200/80 dark:border-teal-800/60 space-y-3">
           <div class="flex items-center justify-between">
             <span class="text-xs font-extrabold uppercase tracking-wider text-teal-800 dark:text-teal-300 flex items-center gap-1.5">
               <i class="fa-solid fa-money-bill-transfer"></i>
-              Informasi Harga Supplier & Harga Jual
+              Informasi Harga Mitra & Harga Jual
             </span>
             <span id="formMarginPreview" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300">
               Margin: Rp 0 (0%)
@@ -527,7 +645,7 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Harga dari Supplier (Modal/Beli) *
+                Harga dari Mitra (Modal/Beli) *
               </label>
               <div class="relative">
                 <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">Rp</span>
@@ -541,12 +659,12 @@
                   class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-sm font-extrabold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
                 />
               </div>
-              <p class="text-[10px] text-slate-500 mt-1">Harga pokok yang diberikan supplier</p>
+              <p class="text-[10px] text-slate-500 mt-1">Harga pokok yang diberikan Mitra</p>
             </div>
 
             <div>
               <label class="block text-xs font-bold text-teal-700 dark:text-teal-300 mb-1">
-                Harga Jual dari Supplier (HET / Rekomendasi) *
+                Harga Jual dari Mitra (HET / Rekomendasi) *
               </label>
               <div class="relative">
                 <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-teal-600">Rp</span>
@@ -560,7 +678,7 @@
                   class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-teal-400 dark:border-teal-700 text-sm font-extrabold text-teal-700 dark:text-teal-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
                 />
               </div>
-              <p class="text-[10px] text-slate-500 mt-1">Harga jual pasaran / rekomendasi dari supplier</p>
+              <p class="text-[10px] text-slate-500 mt-1">Harga jual pasaran / rekomendasi dari Mitra</p>
             </div>
           </div>
         </div>
@@ -593,7 +711,6 @@
                   alt="Preview Produk"
                   class="w-full h-full object-cover"
                 />
-                <!-- Overlay Loading saat AI sedang meng-generate foto studio -->
                 <div id="aiGeneratingOverlay" class="panel-hidden absolute inset-0 bg-slate-950/80 backdrop-blur-[2px] flex flex-col items-center justify-center text-white p-1.5 text-center">
                   <i class="fa-solid fa-wand-magic-sparkles fa-spin text-purple-400 text-lg mb-1"></i>
                   <span id="aiGeneratingStepText" class="text-[9px] font-extrabold leading-tight text-purple-200">AI Full Generate Studio...</span>
@@ -634,7 +751,6 @@
             </div>
 
             <div class="sm:col-span-3 space-y-2.5">
-              <!-- Input File Kamera Belakang HP (Disembunyikan, dipicu saat fallback) -->
               <input
                 id="formFileInput"
                 type="file"
@@ -644,7 +760,6 @@
                 class="panel-hidden"
               />
 
-              <!-- Input File Pilih Foto dari Galeri -->
               <input
                 id="formGalleryInput"
                 type="file"
@@ -771,7 +886,7 @@
     <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
       <div class="px-6 py-4 bg-teal-600 text-white flex items-center justify-between">
         <div>
-          <span class="text-[10px] font-extrabold uppercase tracking-widest text-teal-200 block">Update Cepat Supplier</span>
+          <span class="text-[10px] font-extrabold uppercase tracking-widest text-teal-200 block">Update Cepat Mitra</span>
           <h3 id="quickModalProductName" class="font-extrabold text-sm sm:text-base truncate max-w-[260px]">Nama Produk</h3>
         </div>
         <button type="button" onclick="closeQuickPriceModal()" class="w-8 h-8 rounded-lg text-teal-100 hover:text-white hover:bg-teal-700 flex items-center justify-center cursor-pointer">
@@ -783,7 +898,7 @@
         <input type="hidden" id="quickIdProduk" />
 
         <div>
-          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Harga dari Supplier (Modal) Baru *</label>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Harga dari Mitra (Modal) Baru *</label>
           <div class="relative">
             <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">Rp</span>
             <input
@@ -797,7 +912,7 @@
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-teal-700 dark:text-teal-400 mb-1">Harga Jual dari Supplier Baru *</label>
+          <label class="block text-xs font-bold text-teal-700 dark:text-teal-400 mb-1">Harga Jual dari Mitra Baru *</label>
           <div class="relative">
             <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-teal-600">Rp</span>
             <input
@@ -858,7 +973,7 @@
   </div>
 
   <!-- =========================================================================
-       MODAL 4: KELOLA AKUN SUPPLIER & SUB-FOLDER DRIVE (KHUSUS ADMIN)
+       MODAL 4: KELOLA AKUN MITRA & SUB-FOLDER DRIVE (KHUSUS ADMIN)
        ========================================================================= -->
   <div id="supplierManagerModal" class="panel-hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm overflow-y-auto">
     <div class="bg-white dark:bg-slate-900 w-full max-w-4xl rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-8">
@@ -866,8 +981,8 @@
         <div class="flex items-center gap-2.5">
           <i class="fa-solid fa-users-gear text-amber-400 text-lg"></i>
           <div>
-            <h3 class="font-extrabold text-base">Manajemen Akun Login & Sub-Folder Drive Supplier</h3>
-            <p class="text-[11px] text-slate-400">Setiap supplier otomatis dibuatkan Sub-Folder khusus di Google Drive</p>
+            <h3 class="font-extrabold text-base">Manajemen Akun Login & Sub-Folder Drive Mitra</h3>
+            <p class="text-[11px] text-slate-400">Setiap Mitra otomatis dibuatkan Sub-Folder khusus di Google Drive</p>
           </div>
         </div>
         <button type="button" onclick="closeSupplierManagerModal()" class="w-8 h-8 rounded-lg text-slate-400 hover:text-white flex items-center justify-center cursor-pointer">
@@ -878,19 +993,19 @@
       <div class="p-6 grid grid-cols-1 lg:grid-cols-5 gap-6 max-h-[80vh] overflow-y-auto">
         <div class="lg:col-span-2 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
           <h4 id="supFormTitle" class="font-extrabold text-xs uppercase tracking-wider text-teal-700 dark:text-teal-400">
-            + Buat Akun & Sub-Folder Supplier Baru
+            + Buat Akun & Sub-Folder Mitra Baru
           </h4>
           <input type="hidden" id="supFormId" />
 
           <div>
-            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Nama Perusahaan / Toko Supplier *</label>
+            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Nama Perusahaan / Toko Mitra *</label>
             <input id="supFormNama" type="text" placeholder="CV Maju Bersama" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-semibold" />
           </div>
 
           <div class="grid grid-cols-2 gap-2.5">
             <div>
               <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Username Login *</label>
-              <input id="supFormUsername" type="text" placeholder="supplier3" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-mono" />
+              <input id="supFormUsername" type="text" placeholder="mitra3" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-mono" />
             </div>
             <div>
               <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Password *</label>
@@ -927,7 +1042,7 @@
         </div>
 
         <div class="lg:col-span-3 space-y-2.5">
-          <h4 class="font-extrabold text-xs uppercase tracking-wider text-slate-500">Daftar Akun Terdaftar & Link Sub-Folder Drive</h4>
+          <h4 class="font-extrabold text-xs uppercase tracking-wider text-slate-500">Daftar Akun Mitra Terdaftar & Link Sub-Folder Drive</h4>
           <div id="supplierListContainer" class="space-y-2 max-h-96 overflow-y-auto pr-1"></div>
         </div>
       </div>
@@ -1041,7 +1156,7 @@
             class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
           <p class="text-[10px] text-slate-500 mt-1">
-            Jika dikosongkan, sistem otomatis membuat folder <strong>Portal_Harga_Supplier_Drive</strong> beserta Sub-Folder untuk setiap supplier.
+            Jika dikosongkan, sistem otomatis membuat folder utama beserta Sub-Folder untuk setiap Mitra.
           </p>
         </div>
 
@@ -1137,8 +1252,6 @@
 
     /**
      * LINK WEB APP GOOGLE APPS SCRIPT (/exec) YANG SUDAH DITANAM PERMANEN
-     * Digunakan oleh frontend Vercel untuk berkomunikasi langsung dengan
-     * Spreadsheet, Google Drive & AI Product Studio di Google Apps Script.
      */
     const DEFAULT_GAS_EXEC_URL = 'https://script.google.com/macros/s/AKfycbzNUVAZoAuZ5zZi8nZEH2IF2spAI8slupwZK7OMx6cj3w7jSCEzs3p3tNi7Mkv_or6C/exec';
     const STORAGE_GAS_URL_KEY = 'PORTAL_SUPPLIER_GAS_EXEC_URL';
@@ -1151,10 +1264,9 @@
     let compressedBase64Image = '';
     let compressedMimeType = 'image/jpeg';
 
-    // Menyimpan hasil Mode 2 (AI Full Generate) & Foto Asli
     let rawCapturedBase64Image = '';
     let aiFullGenBase64Image = '';
-    let activePhotoVariant = 'fullgen'; // 'fullgen' | 'raw'
+    let activePhotoVariant = 'fullgen';
 
     let pendingDeleteProductId = null;
     let currentLightboxProduct = null;
@@ -1193,9 +1305,6 @@
       } catch (e) {}
     }
 
-    /**
-     * Pemanggil Backend Google Apps Script (Mendukung Vercel Fetch CORS & Native google.script.run)
-     */
     async function callBackend(actionName, argsArray, onSuccess, onError) {
       const args = argsArray || [];
 
@@ -1393,6 +1502,97 @@
       }
     }
 
+    /**
+     * ========================================================================
+     * FITUR PENDAFTARAN MANDIRI: DAFTAR JADI MITRA
+     * ========================================================================
+     */
+    function openRegisterMitraModal() {
+      document.getElementById('regNamaToko').value = '';
+      document.getElementById('regUsername').value = '';
+      document.getElementById('regPassword').value = '';
+      document.getElementById('regKontakWa').value = '';
+      document.getElementById('regAlamat').value = '';
+      showBlockElement('registerMitraModal');
+    }
+
+    function closeRegisterMitraModal() {
+      hideElement('registerMitraModal');
+    }
+
+    function submitRegisterMitraForm() {
+      const namaToko = (document.getElementById('regNamaToko').value || '').trim();
+      const username = (document.getElementById('regUsername').value || '').trim().replace(/\s+/g, '');
+      const password = (document.getElementById('regPassword').value || '').trim();
+      const kontakWa = (document.getElementById('regKontakWa').value || '').trim();
+      const alamat = (document.getElementById('regAlamat').value || '').trim();
+
+      if (!namaToko) {
+        showToast('Nama Toko wajib diisi!', 'error');
+        return;
+      }
+      if (!username) {
+        showToast('User Login wajib diisi!', 'error');
+        return;
+      }
+      if (!password) {
+        showToast('Password wajib diisi!', 'error');
+        return;
+      }
+      if (!kontakWa) {
+        showToast('No. WhatsApp wajib diisi!', 'error');
+        return;
+      }
+      if (!alamat) {
+        showToast('Alamat Lengkap wajib diisi!', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('btnSubmitRegisterMitra');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i><span>Mendaftarkan Mitra...</span>';
+      }
+
+      const regPayload = {
+        nama_supplier: namaToko,
+        username: username,
+        password: password,
+        kontak_wa: kontakWa,
+        alamat: alamat
+      };
+
+      callBackend(
+        'registerMitraAccount',
+        [regPayload],
+        function (res) {
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-user-check"></i><span>Daftar & Masuk</span>';
+          }
+          if (res && res.success) {
+            closeRegisterMitraModal();
+            showToast(res.message || 'Pendaftaran Mitra berhasil!');
+            if (res.user) {
+              onLoginSuccess(res.user);
+            } else {
+              document.getElementById('loginUsername').value = username;
+              document.getElementById('loginPassword').value = password;
+            }
+          } else {
+            showToast((res && res.message) || 'Gagal mendaftar jadi Mitra.', 'error');
+          }
+        },
+        function (err) {
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-user-check"></i><span>Daftar & Masuk</span>';
+          }
+          showToast('Gagal menghubungi server: ' + (err.message || err), 'error');
+        }
+      );
+    }
+
     function submitLoginForm() {
       const uEl = document.getElementById('loginUsername');
       const pEl = document.getElementById('loginPassword');
@@ -1478,7 +1678,7 @@
         showBlockElement('adminKpiSection');
       } else {
         if (badgeEl) {
-          badgeEl.textContent = 'SUPPLIER';
+          badgeEl.textContent = 'MITRA';
           badgeEl.className =
             'px-2 py-0.5 text-[10px] font-extrabold uppercase rounded-full bg-teal-100 text-teal-800 dark:bg-teal-900/60 dark:text-teal-300';
         }
@@ -1563,7 +1763,7 @@
       if (badge) {
         badge.textContent = activeSyncInfo.mainDriveFolderId
           ? 'Folder Utama & Sub-Folder Drive Aktif'
-          : 'Sub-Folder Drive Otomatis per Supplier';
+          : 'Sub-Folder Drive Otomatis per Mitra';
       }
       if (labelDriveBtn) {
         labelDriveBtn.textContent = 'Buka Folder Drive Utama';
@@ -1702,7 +1902,7 @@
         const formOwnerSelect = document.getElementById('formSupplierOwner');
         if (supSelect && formOwnerSelect) {
           const prevSup = supSelect.value || 'ALL';
-          supSelect.innerHTML = '<option value="ALL">Semua Supplier (Mode Admin)</option>';
+          supSelect.innerHTML = '<option value="ALL">Semua Mitra (Mode Admin)</option>';
           formOwnerSelect.innerHTML = '';
 
           const supplierItems = allSuppliers.filter(function (s) {
@@ -1783,7 +1983,7 @@
 
       if (isAdmin) {
         document.getElementById('statTotalProducts').textContent = scopedProducts.length;
-        document.getElementById('statTotalSubtext').textContent = 'Semua supplier aktif';
+        document.getElementById('statTotalSubtext').textContent = 'Semua Mitra aktif';
         const avgMargin = scopedProducts.length > 0 ? Math.round(totalMarginSum / scopedProducts.length) : 0;
         document.getElementById('statAvgMargin').textContent = formatRupiah(avgMargin);
         document.getElementById('statTotalStock').textContent = totalStockSum.toLocaleString('id-ID');
@@ -1911,7 +2111,7 @@
               '<div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3 border border-slate-200/70 dark:border-slate-800 space-y-2">' +
                 '<div class="flex items-baseline justify-between gap-2">' +
                   '<div>' +
-                    '<span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Harga Supplier (Modal)</span>' +
+                    '<span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Harga Mitra (Modal)</span>' +
                     '<span class="text-sm sm:text-base font-extrabold text-slate-800 dark:text-slate-100">' + formatRupiah(hargaModal) + '</span>' +
                   '</div>' +
                   '<div class="text-right">' +
@@ -1921,7 +2121,7 @@
 
                 '<div class="border-t border-slate-200/70 dark:border-slate-700/70 pt-2 flex items-baseline justify-between gap-2">' +
                   '<div>' +
-                    '<span class="text-[10px] font-extrabold uppercase tracking-wider text-teal-600 dark:text-teal-400 block">Harga Jual Supplier</span>' +
+                    '<span class="text-[10px] font-extrabold uppercase tracking-wider text-teal-600 dark:text-teal-400 block">Harga Jual Mitra</span>' +
                     '<span class="text-base sm:text-lg font-extrabold text-teal-700 dark:text-teal-300">' + formatRupiah(hargaJual) + '</span>' +
                   '</div>' +
                   '<div class="text-right">' +
@@ -2054,11 +2254,6 @@
       document.body.removeChild(a);
     }
 
-    /**
-     * ========================================================================
-     * FITUR KAMERA LANGSUNG & GALERI + MODE 2 (AI FULL GENERATE STUDIO PROMPT)
-     * ========================================================================
-     */
     function triggerGalleryPicker() {
       stopDirectCamera();
       const galleryInput = document.getElementById('formGalleryInput');
@@ -2148,9 +2343,6 @@
       processNewRawPhotoWithAiFullGenerate(capturedDataUrl);
     }
 
-    /**
-     * Memilih antara Mode 2 (AI Full Generate) vs Foto Asli
-     */
     function selectPhotoVariant(variant) {
       const previewEl = document.getElementById('formImagePreview');
       const badge = document.getElementById('compressionBadge');
@@ -2189,9 +2381,6 @@
       }
     }
 
-    /**
-     * Meng-generate ulang variasi baru Mode 2 (AI Full Generate)
-     */
     function regenerateAiFullPhoto() {
       const rawSource = rawCapturedBase64Image || compressedBase64Image;
       if (!rawSource) {
@@ -2201,10 +2390,6 @@
       processNewRawPhotoWithAiFullGenerate(rawSource);
     }
 
-    /**
-     * Eksekusi Otomatis Mode 2 (AI Full Generate) dengan Google Flow Prompt
-     * saat supplier mengambil foto dari Kamera maupun memilih dari Galeri
-     */
     async function processNewRawPhotoWithAiFullGenerate(rawDataUrl) {
       rawCapturedBase64Image = rawDataUrl;
       aiFullGenBase64Image = '';
@@ -2232,7 +2417,6 @@
       const kategoriHint = (document.getElementById('formKategori').value || '').trim();
       const combinedHint = [productNameHint, kategoriHint].filter(Boolean).join(' - ');
 
-      // 1. Panggil Backend generateAiProductPhoto (Gemini Image / Gemini Vision + Flux Commercial Studio)
       callBackend(
         'generateAiProductPhoto',
         [rawDataUrl, GOOGLE_FLOW_PRODUCT_PROMPT, combinedHint],
@@ -2248,20 +2432,15 @@
             selectPhotoVariant('fullgen');
             showToast('Foto produk berhasil di-generate dengan AI Studio (Mode 2)!');
           } else {
-            // 2. Fallback langsung di Browser ke Flux Commercial Studio Engine dengan prompt Google Flow
             await runClientDirectFluxGenerator(combinedHint, overlayEl);
           }
         },
         async function () {
-          // Fallback langsung di Browser ke Flux Commercial Studio Engine dengan prompt Google Flow
           await runClientDirectFluxGenerator(combinedHint, overlayEl);
         }
       );
     }
 
-    /**
-     * Generator AI Full Generate langsung di Browser jika koneksi ke backend lambat
-     */
     async function runClientDirectFluxGenerator(subjectHint, overlayEl) {
       try {
         const subjectText = subjectHint
@@ -2391,7 +2570,7 @@
           document.getElementById('formSupplierOwner').value = prod.id_supplier;
         }
       } else {
-        document.getElementById('productModalTitle').textContent = 'Tambah Produk Supplier Baru';
+        document.getElementById('productModalTitle').textContent = 'Tambah Produk Mitra Baru';
         document.getElementById('formIdProduk').value = '';
         document.getElementById('formNamaProduk').value = '';
         document.getElementById('formKodeSku').value = '';
@@ -2488,7 +2667,7 @@
         return;
       }
       if (hargaModal <= 0 || hargaJual <= 0) {
-        showToast('Harga Supplier dan Harga Jual harus lebih dari Rp 0.', 'error');
+        showToast('Harga Mitra dan Harga Jual harus lebih dari Rp 0.', 'error');
         return;
       }
 
@@ -2661,7 +2840,7 @@
     }
 
     function resetSupplierForm() {
-      document.getElementById('supFormTitle').textContent = '+ Buat Akun & Sub-Folder Supplier Baru';
+      document.getElementById('supFormTitle').textContent = '+ Buat Akun & Sub-Folder Mitra Baru';
       document.getElementById('supFormId').value = '';
       document.getElementById('supFormNama').value = '';
       document.getElementById('supFormUsername').value = '';
@@ -2706,7 +2885,7 @@
               '</div>' +
               '<div class="flex items-center gap-1.5 shrink-0">' +
                 (hasFolder
-                  ? '<a href="' + escapeHtml(s.folder_drive_url) + '" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1.5 rounded-lg bg-teal-600/15 hover:bg-teal-600/25 text-teal-700 dark:text-teal-300 border border-teal-500/30 text-xs font-bold flex items-center gap-1" title="Buka Sub-Folder Google Drive Supplier Ini"><i class="fa-brands fa-google-drive"></i><span class="hidden sm:inline">Folder</span></a>'
+                  ? '<a href="' + escapeHtml(s.folder_drive_url) + '" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1.5 rounded-lg bg-teal-600/15 hover:bg-teal-600/25 text-teal-700 dark:text-teal-300 border border-teal-500/30 text-xs font-bold flex items-center gap-1" title="Buka Sub-Folder Google Drive Mitra Ini"><i class="fa-brands fa-google-drive"></i><span class="hidden sm:inline">Folder</span></a>'
                   : '') +
                 '<button type="button" onclick="editSupplierAccount(\'' + escapeJs(s.id_supplier) + '\')" class="px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-bold text-teal-600 hover:bg-teal-50 cursor-pointer">' +
                   '<i class="fa-solid fa-pen mr-1"></i>Edit' +
@@ -2724,7 +2903,7 @@
       const password = document.getElementById('supFormPassword').value.trim();
 
       if (!nama || !username || !password) {
-        showToast('Nama Supplier, Username, dan Password wajib diisi.', 'error');
+        showToast('Nama Mitra, Username, dan Password wajib diisi.', 'error');
         return;
       }
 
@@ -2749,7 +2928,7 @@
           btn.disabled = false;
           btn.textContent = 'Simpan Akun & Buat Folder';
           if (res && res.success) {
-            showToast(res.message || 'Akun supplier & Sub-Folder Drive tersimpan.');
+            showToast(res.message || 'Akun Mitra & Sub-Folder Drive tersimpan.');
             resetSupplierForm();
             refreshData();
             setTimeout(renderSupplierListAdmin, 500);
@@ -2844,7 +3023,6 @@
         .replace(/"/g, '\\"');
     }
 
-    // Pulihkan sesi login jika halaman Vercel di-refresh
     (function restoreSessionOnLoad() {
       try {
         const savedSession = sessionStorage.getItem(STORAGE_SESSION_USER_KEY);
@@ -2859,6 +3037,9 @@
 
     // Ekspor seluruh handler ke objek global window
     window.submitLoginForm = submitLoginForm;
+    window.openRegisterMitraModal = openRegisterMitraModal;
+    window.closeRegisterMitraModal = closeRegisterMitraModal;
+    window.submitRegisterMitraForm = submitRegisterMitraForm;
     window.togglePasswordVisibility = togglePasswordVisibility;
     window.toggleDarkMode = toggleDarkMode;
     window.handleLogout = handleLogout;
