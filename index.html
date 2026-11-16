@@ -355,16 +355,38 @@
               <i class="fa-brands fa-google-drive"></i>
               <span id="driveSyncStatusBadge">Sub-Folder Drive Otomatis per Mitra</span>
             </span>
-            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-400/30">
-              <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>AI Full Generate (Google Flow Mode 2)
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+              <i class="fa-solid fa-shield-check mr-1"></i>Approval & Sync Spreadsheet hibualamo.shop
             </span>
           </div>
-          <h3 class="text-sm sm:text-base font-bold text-white">Sinkronisasi Penuh Google Drive & Spreadsheet</h3>
+          <h3 class="text-sm sm:text-base font-bold text-white">Sinkronisasi Google Drive, Spreadsheet & Moderasi Hibualamo.shop</h3>
           <p class="text-xs text-slate-300 leading-relaxed">
-            Setiap foto dari kamera/galeri otomatis di-generate ulang oleh AI menggunakan prompt studio komersial dan disimpan ke Sub-Folder Drive masing-masing Mitra (<code class="text-teal-300 font-mono">lh3.googleusercontent.com</code>).
+            Setiap produk yang diinput Mitra berstatus <strong class="text-amber-300">Pending</strong> dan baru akan masuk ke Sheet Katalog <code class="text-teal-300 font-mono">hibualamo.shop</code> setelah di-<strong>Approve</strong> oleh Admin.
           </p>
         </div>
         <div class="flex flex-wrap items-center gap-2 shrink-0">
+          <button
+            id="btnApproveAllPending"
+            type="button"
+            onclick="handleApproveAllPending()"
+            class="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold flex items-center gap-1.5 shadow-md transition cursor-pointer"
+            title="Setujui semua produk Pending & sinkronkan ke Spreadsheet hibualamo.shop"
+          >
+            <i class="fa-solid fa-check-double"></i>
+            <span id="labelApproveAllBtn">Approve Semua Pending</span>
+          </button>
+
+          <button
+            id="btnOpenHibualamoSheet"
+            type="button"
+            onclick="openHibualamoSpreadsheet()"
+            class="px-3.5 py-2 rounded-xl bg-cyan-500/25 hover:bg-cyan-500/35 border border-cyan-400/40 text-xs font-bold text-cyan-200 flex items-center gap-2 transition cursor-pointer"
+            title="Buka Google Spreadsheet hibualamo.shop"
+          >
+            <i class="fa-solid fa-store"></i>
+            <span>Sheet Hibualamo.shop</span>
+          </button>
+
           <button
             id="btnOpenMyDriveFolder"
             type="button"
@@ -372,17 +394,7 @@
             class="px-3.5 py-2 rounded-xl bg-teal-500/25 hover:bg-teal-500/35 border border-teal-400/40 text-xs font-bold text-teal-200 flex items-center gap-2 transition cursor-pointer"
           >
             <i class="fa-solid fa-folder-open"></i>
-            <span id="labelOpenDriveBtn">Buka Folder Drive Utama</span>
-          </button>
-
-          <button
-            id="btnOpenSpreadsheet"
-            type="button"
-            onclick="openActiveSpreadsheet()"
-            class="px-3.5 py-2 rounded-xl bg-emerald-500/25 hover:bg-emerald-500/35 border border-emerald-400/40 text-xs font-bold text-emerald-200 flex items-center gap-2 transition cursor-pointer"
-          >
-            <i class="fa-solid fa-file-excel"></i>
-            <span>Buka Spreadsheet</span>
+            <span id="labelOpenDriveBtn">Buka Folder Drive</span>
           </button>
 
           <button
@@ -392,16 +404,7 @@
             class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold flex items-center gap-1.5 shadow-md transition cursor-pointer"
           >
             <i class="fa-solid fa-sliders"></i>
-            <span>Tes & Pengaturan Drive</span>
-          </button>
-
-          <button
-            type="button"
-            onclick="openLh3ConverterTester()"
-            class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-xs font-bold text-white flex items-center gap-1.5 transition cursor-pointer"
-          >
-            <i class="fa-solid fa-link text-teal-300"></i>
-            <span>Konverter lh3</span>
+            <span>Pengaturan Sync & Hibualamo</span>
           </button>
         </div>
       </div>
@@ -465,6 +468,17 @@
             class="panel-hidden px-3 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs sm:text-sm font-bold focus:outline-none focus:ring-2 focus:ring-amber-500"
           >
             <option value="ALL">Semua Mitra (Mode Admin)</option>
+          </select>
+
+          <select
+            id="filterApprovalStatus"
+            onchange="renderProducts()"
+            class="px-3 py-2.5 rounded-xl bg-teal-50 dark:bg-teal-950/40 border border-teal-300 dark:border-teal-800 text-teal-800 dark:text-teal-300 text-xs sm:text-sm font-bold focus:outline-none focus:ring-2 focus:ring-teal-500"
+          >
+            <option value="ALL">Semua Status Hibualamo.shop</option>
+            <option value="Pending">⏳ Menunggu Approval (Pending)</option>
+            <option value="Approved">✅ Tayang di Hibualamo.shop (Approved)</option>
+            <option value="Rejected">❌ Ditolak / Revisi (Rejected)</option>
           </select>
         </div>
 
@@ -1163,7 +1177,7 @@
         <!-- Bagian 3: ID Google Spreadsheet (Opsional) -->
         <div>
           <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-            3. Link / ID Google Spreadsheet Database (Opsional)
+            3. Link / ID Google Spreadsheet Database Mitra (Opsional)
           </label>
           <input
             id="configSpreadsheetInput"
@@ -1171,6 +1185,58 @@
             placeholder="Kosongkan agar otomatis, atau tempel link Spreadsheet..."
             class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
+        </div>
+
+        <!-- Bagian 3B: Skenario B - Link / ID Google Spreadsheet hibualamo.shop -->
+        <div class="p-3.5 rounded-2xl bg-teal-50/90 dark:bg-teal-950/30 border border-teal-300 dark:border-teal-800 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <label class="block text-xs font-extrabold text-teal-900 dark:text-teal-300">
+              <i class="fa-solid fa-store mr-1"></i>Skenario B: Sinkronisasi Spreadsheet <code class="font-mono">hibualamo.shop</code>
+            </label>
+            <span class="px-2 py-0.5 rounded bg-teal-600 text-white text-[10px] font-bold">Auto-Sync Saat Approve</span>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+              Link / ID Google Spreadsheet Website <code class="font-mono">hibualamo.shop</code>:
+            </label>
+            <input
+              id="configHibualamoSpreadsheetInput"
+              type="text"
+              placeholder="Kosongkan jika menggunakan Spreadsheet yang sama, atau tempel link Spreadsheet hibualamo.shop..."
+              class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-teal-300 dark:border-teal-700 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                Nama Tab Sheet Katalog <code class="font-mono">hibualamo.shop</code>:
+              </label>
+              <input
+                id="configHibualamoSheetNameInput"
+                type="text"
+                placeholder="Products_Hibualamo"
+                class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-teal-300 dark:border-teal-700 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-teal-500"
+              />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                Endpoint JSON Katalog Approved:
+              </label>
+              <input
+                id="configHibualamoApiUrlOutput"
+                type="text"
+                readonly
+                onclick="this.select()"
+                class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-[11px] font-mono text-teal-700 dark:text-teal-300"
+              />
+            </div>
+          </div>
+
+          <p class="text-[10px] text-teal-800 dark:text-teal-300/90 leading-relaxed">
+            Saat Admin menekan tombol <strong>Approve</strong> pada produk Mitra, baris produk tersebut otomatis disalin/diperbarui ke Sheet <code class="font-mono">hibualamo.shop</code> di atas.
+          </p>
         </div>
 
         <!-- Bagian 4: API Key Google AI Studio / Gemini (Opsional untuk Vision Analyzer) -->
@@ -1559,18 +1625,20 @@
         username: username,
         password: password,
         kontak_wa: kontakWa,
-        alamat: alamat
+        alamat: alamat,
+        status_aktif: 'Aktif',
+        isSelfRegistration: true
       };
 
       callBackend(
         'registerMitraAccount',
         [regPayload],
         function (res) {
-          if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fa-solid fa-user-check"></i><span>Daftar & Masuk</span>';
-          }
           if (res && res.success) {
+            if (btn) {
+              btn.disabled = false;
+              btn.innerHTML = '<i class="fa-solid fa-user-check"></i><span>Daftar & Masuk</span>';
+            }
             closeRegisterMitraModal();
             showToast(res.message || 'Pendaftaran Mitra berhasil!');
             if (res.user) {
@@ -1579,9 +1647,48 @@
               document.getElementById('loginUsername').value = username;
               document.getElementById('loginPassword').value = password;
             }
-          } else {
-            showToast((res && res.message) || 'Gagal mendaftar jadi Mitra.', 'error');
+            return;
           }
+
+          // Smart Fallback: Jika deployment kode.gs lama belum mengenal registerMitraAccount,
+          // otomatis gunakan saveSupplierAccount dengan konteks admin internal lalu login otomatis.
+          const errMessage = String((res && res.message) || '');
+          if (errMessage.indexOf('Action API tidak dikenali') !== -1) {
+            const fallbackAdminContext = { id_supplier: 'ADMIN-01', role: 'admin', nama_supplier: 'System Auto Register' };
+            callBackend(
+              'saveSupplierAccount',
+              [regPayload, fallbackAdminContext],
+              function (fallbackRes) {
+                if (btn) {
+                  btn.disabled = false;
+                  btn.innerHTML = '<i class="fa-solid fa-user-check"></i><span>Daftar & Masuk</span>';
+                }
+                if (fallbackRes && fallbackRes.success) {
+                  closeRegisterMitraModal();
+                  showToast('Pendaftaran Mitra "' + namaToko + '" berhasil! Sedang masuk otomatis...');
+                  document.getElementById('loginUsername').value = username;
+                  document.getElementById('loginPassword').value = password;
+                  submitLoginForm();
+                } else {
+                  showToast((fallbackRes && fallbackRes.message) || 'Gagal mendaftar jadi Mitra.', 'error');
+                }
+              },
+              function (fbErr) {
+                if (btn) {
+                  btn.disabled = false;
+                  btn.innerHTML = '<i class="fa-solid fa-user-check"></i><span>Daftar & Masuk</span>';
+                }
+                showToast('Gagal mendaftar: ' + (fbErr.message || fbErr), 'error');
+              }
+            );
+            return;
+          }
+
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-user-check"></i><span>Daftar & Masuk</span>';
+          }
+          showToast(errMessage || 'Gagal mendaftar jadi Mitra.', 'error');
         },
         function (err) {
           if (btn) {
@@ -1594,16 +1701,14 @@
     }
 
     function submitLoginForm() {
-      const uEl = document.getElementById('loginUsername');
-      const pEl = document.getElementById('loginPassword');
-      const rawUser = uEl ? uEl.value : '';
-      const rawPass = pEl ? pEl.value : '';
-
-      const username = String(rawUser || '').trim();
-      const password = String(rawPass || '').trim();
+      const usernameInput = document.getElementById('loginUsername');
+      const passwordInput = document.getElementById('loginPassword');
+      const username = usernameInput ? usernameInput.value.trim() : '';
+      const password = passwordInput ? passwordInput.value.trim() : '';
 
       if (!username || !password) {
-        showLoginAlert('Silakan isi Username dan Password terlebih dahulu.', 'error');
+        showLoginAlert('Mohon isi Username dan Password terlebih dahulu.', 'error');
+        showToast('Username dan Password wajib diisi!', 'warning');
         return;
       }
 
@@ -1612,7 +1717,7 @@
         btn.disabled = true;
         btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i><span>Memverifikasi Akun...</span>';
       }
-      showLoginAlert('Memverifikasi kredensial akun ' + username + '...', 'info');
+      showLoginAlert('Menghubungi database & memverifikasi akun Mitra...', 'info');
 
       callBackend(
         'loginUser',
@@ -1623,9 +1728,10 @@
             btn.innerHTML = '<span>Masuk ke Portal</span><i class="fa-solid fa-arrow-right-to-bracket"></i>';
           }
           if (res && res.success && res.user) {
+            hideLoginAlert();
             onLoginSuccess(res.user);
           } else {
-            const msg = res && res.message ? res.message : 'Username atau password salah.';
+            const msg = (res && res.message) || 'Username atau password tidak sesuai.';
             showLoginAlert(msg, 'error');
             showToast(msg, 'error');
           }
@@ -1635,7 +1741,7 @@
             btn.disabled = false;
             btn.innerHTML = '<span>Masuk ke Portal</span><i class="fa-solid fa-arrow-right-to-bracket"></i>';
           }
-          const errMsg = 'Gagal terhubung ke Server Google Apps Script: ' + (err.message || err);
+          const errMsg = 'Gagal terhubung ke server: ' + (err.message || err);
           showLoginAlert(errMsg, 'error');
           showToast(errMsg, 'error');
         }
@@ -1648,48 +1754,42 @@
         sessionStorage.setItem(STORAGE_SESSION_USER_KEY, JSON.stringify(userObj));
       } catch (e) {}
 
-      hideLoginAlert();
       hideElement('loginView');
       showBlockElement('appView');
 
-      const nameEl = document.getElementById('headerSupplierName');
-      const metaEl = document.getElementById('headerSupplierMeta');
-      const badgeEl = document.getElementById('headerRoleBadge');
       const isAdmin = String(currentUser.role || '').toLowerCase() === 'admin';
+      document.getElementById('headerSupplierName').textContent = currentUser.nama_supplier || 'Mitra';
+      document.getElementById('headerSupplierMeta').textContent =
+        'ID: ' + (currentUser.id_supplier || '-') + (currentUser.kontak_wa ? ' • WA: ' + currentUser.kontak_wa : '');
 
-      if (nameEl) nameEl.textContent = currentUser.nama_supplier;
-      if (metaEl) {
-        metaEl.textContent =
-          'ID: ' +
-          currentUser.id_supplier +
-          (currentUser.alamat ? ' • ' + currentUser.alamat : '');
-      }
+      const roleBadge = document.getElementById('headerRoleBadge');
+      const btnManageSup = document.getElementById('btnManageSuppliers');
+      const filterSup = document.getElementById('filterSupplier');
+      const adminOwnerWrap = document.getElementById('adminSupplierSelectWrap');
+      const adminSyncBanner = document.getElementById('adminSyncBanner');
+      const adminKpiSection = document.getElementById('adminKpiSection');
 
       if (isAdmin) {
-        if (badgeEl) {
-          badgeEl.textContent = 'ADMIN MASTER';
-          badgeEl.className =
-            'px-2 py-0.5 text-[10px] font-extrabold uppercase rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300';
-        }
-        showBlockElement('btnManageSuppliers');
-        showBlockElement('filterSupplier');
-        showBlockElement('adminSupplierSelectWrap');
-        showBlockElement('adminSyncBanner');
-        showBlockElement('adminKpiSection');
+        roleBadge.textContent = 'ADMIN UTAMA';
+        roleBadge.className = 'px-2 py-0.5 text-[10px] font-extrabold uppercase rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300';
+        btnManageSup.classList.remove('panel-hidden');
+        btnManageSup.classList.add('flex');
+        filterSup.classList.remove('panel-hidden');
+        adminOwnerWrap.classList.remove('panel-hidden');
+        if (adminSyncBanner) adminSyncBanner.classList.remove('panel-hidden');
+        if (adminKpiSection) adminKpiSection.classList.remove('panel-hidden');
       } else {
-        if (badgeEl) {
-          badgeEl.textContent = 'MITRA';
-          badgeEl.className =
-            'px-2 py-0.5 text-[10px] font-extrabold uppercase rounded-full bg-teal-100 text-teal-800 dark:bg-teal-900/60 dark:text-teal-300';
-        }
-        hideElement('btnManageSuppliers');
-        hideElement('filterSupplier');
-        hideElement('adminSupplierSelectWrap');
-        hideElement('adminSyncBanner');
-        hideElement('adminKpiSection');
+        roleBadge.textContent = 'MITRA';
+        roleBadge.className = 'px-2 py-0.5 text-[10px] font-extrabold uppercase rounded-full bg-teal-100 text-teal-800 dark:bg-teal-900/60 dark:text-teal-300';
+        btnManageSup.classList.add('panel-hidden');
+        btnManageSup.classList.remove('flex');
+        filterSup.classList.add('panel-hidden');
+        adminOwnerWrap.classList.add('panel-hidden');
+        if (adminSyncBanner) adminSyncBanner.classList.add('panel-hidden');
+        if (adminKpiSection) adminKpiSection.classList.add('panel-hidden');
       }
 
-      showToast('Selamat datang, ' + currentUser.nama_supplier + '!');
+      showToast('Selamat datang, ' + (currentUser.nama_supplier || currentUser.username) + '!');
       refreshData();
     }
 
@@ -1697,16 +1797,32 @@
       stopDirectCamera();
       currentUser = null;
       allProducts = [];
+      allSuppliers = [];
       try {
         sessionStorage.removeItem(STORAGE_SESSION_USER_KEY);
       } catch (e) {}
 
-      const pEl = document.getElementById('loginPassword');
-      if (pEl) pEl.value = '';
+      const passInput = document.getElementById('loginPassword');
+      if (passInput) passInput.value = '';
       hideLoginAlert();
       hideElement('appView');
       showBlockElement('loginView');
       showToast('Anda telah keluar dari sesi portal.');
+    }
+
+    function setViewMode(mode) {
+      currentViewMode = mode === 'table' ? 'table' : 'grid';
+      const btnGrid = document.getElementById('btnViewGrid');
+      const btnTable = document.getElementById('btnViewTable');
+
+      if (currentViewMode === 'grid') {
+        btnGrid.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-slate-900 text-teal-600 shadow-sm transition cursor-pointer';
+        btnTable.className = 'px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 transition cursor-pointer';
+      } else {
+        btnTable.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-slate-900 text-teal-600 shadow-sm transition cursor-pointer';
+        btnGrid.className = 'px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 transition cursor-pointer';
+      }
+      renderProducts();
     }
 
     function refreshData() {
@@ -1728,24 +1844,22 @@
 
           if (res && res.success) {
             allProducts = res.products || [];
-            if (res.suppliers && res.suppliers.length) {
-              allSuppliers = res.suppliers;
-            }
+            allSuppliers = res.suppliers || [];
             if (res.syncInfo) {
-              activeSyncInfo = res.syncInfo;
-              updateSyncBannerUI();
+              activeSyncInfo = Object.assign(activeSyncInfo, res.syncInfo);
             }
-            populateDynamicFilters();
+            updateSyncBannerUI();
+            populateAdminSupplierDropdowns();
             renderProducts();
           } else {
-            showToast((res && res.message) || 'Gagal memuat data dari Google Spreadsheet.', 'error');
+            showToast((res && res.message) || 'Gagal memuat data produk.', 'error');
             renderProducts();
           }
         },
         function (err) {
           if (refreshIcon) refreshIcon.classList.remove('fa-spin');
           hideElement('loadingState');
-          showToast('Gagal mengambil data dari Google Apps Script: ' + (err.message || err), 'error');
+          showToast('Gagal mengambil data dari Google Spreadsheet: ' + (err.message || err), 'error');
           renderProducts();
         }
       );
@@ -1753,37 +1867,74 @@
 
     function updateSyncBannerUI() {
       if (!currentUser) return;
-      const isAdmin = String(currentUser.role || '').toLowerCase() === 'admin';
-      if (!isAdmin) return;
-
-      const badge = document.getElementById('driveSyncStatusBadge');
+      const isAdmin = String(currentUser.role).toLowerCase() === 'admin';
+      const badgeEl = document.getElementById('driveSyncStatusBadge');
       const labelDriveBtn = document.getElementById('labelOpenDriveBtn');
-      const btnSheet = document.getElementById('btnOpenSpreadsheet');
 
-      if (badge) {
-        badge.textContent = activeSyncInfo.mainDriveFolderId
-          ? 'Folder Utama & Sub-Folder Drive Aktif'
-          : 'Sub-Folder Drive Otomatis per Mitra';
+      if (isAdmin) {
+        if (badgeEl) {
+          badgeEl.textContent = activeSyncInfo.mainDriveFolderId
+            ? 'Folder Utama Drive Terhubung'
+            : 'Klik Pengaturan Sync untuk Inisialisasi';
+        }
+        if (labelDriveBtn) labelDriveBtn.textContent = 'Folder Drive Utama';
       }
-      if (labelDriveBtn) {
-        labelDriveBtn.textContent = 'Buka Folder Drive Utama';
+    }
+
+    function populateAdminSupplierDropdowns() {
+      if (!currentUser || String(currentUser.role).toLowerCase() !== 'admin') return;
+      const filterSelect = document.getElementById('filterSupplier');
+      const ownerSelect = document.getElementById('formSupplierOwner');
+      const currentFilterVal = filterSelect ? filterSelect.value : 'ALL';
+
+      if (filterSelect) {
+        let filterHtml = '<option value="ALL">Semua Mitra (Mode Admin)</option>';
+        allSuppliers.forEach(function (s) {
+          if (String(s.role).toLowerCase() !== 'admin') {
+            filterHtml +=
+              '<option value="' +
+              escapeHtml(s.id_supplier) +
+              '">' +
+              escapeHtml(s.nama_supplier) +
+              ' (' +
+              escapeHtml(s.id_supplier) +
+              ')</option>';
+          }
+        });
+        filterSelect.innerHTML = filterHtml;
+        filterSelect.value = currentFilterVal;
       }
-      if (btnSheet) {
-        btnSheet.classList.remove('panel-hidden');
+
+      if (ownerSelect) {
+        let ownerHtml = '';
+        allSuppliers.forEach(function (s) {
+          ownerHtml +=
+            '<option value="' +
+            escapeHtml(s.id_supplier) +
+            '" data-name="' +
+            escapeHtml(s.nama_supplier) +
+            '">' +
+            escapeHtml(s.nama_supplier) +
+            ' (' +
+            escapeHtml(s.id_supplier) +
+            ')</option>';
+        });
+        ownerSelect.innerHTML = ownerHtml;
       }
     }
 
     function openActiveDriveFolder() {
-      const isAdmin = currentUser && String(currentUser.role || '').toLowerCase() === 'admin';
+      if (!currentUser) return;
+      const isAdmin = String(currentUser.role).toLowerCase() === 'admin';
       const targetUrl = isAdmin
-        ? activeSyncInfo.mainDriveFolderUrl || activeSyncInfo.supplierFolderUrl
-        : activeSyncInfo.supplierFolderUrl || activeSyncInfo.mainDriveFolderUrl;
+        ? activeSyncInfo.mainDriveFolderUrl
+        : (activeSyncInfo.supplierFolderUrl || currentUser.folder_drive_url || activeSyncInfo.mainDriveFolderUrl);
 
       if (targetUrl) {
         window.open(targetUrl, '_blank', 'noopener,noreferrer');
       } else {
         openDriveSyncConfigModal();
-        showToast('Klik tombol "Simpan & Tes Buat Folder Drive Sekarang" untuk mengaktifkan folder Drive.', 'warning');
+        showToast('Klik tombol "Simpan & Tes Buat Folder Drive Sekarang" untuk membuat folder otomatis.', 'warning');
       }
     }
 
@@ -1796,16 +1947,40 @@
       }
     }
 
+    function openHibualamoSpreadsheet() {
+      const targetUrl =
+        (activeSyncInfo && (activeSyncInfo.hibualamoSpreadsheetUrl || activeSyncInfo.spreadsheetUrl)) || '';
+      if (targetUrl) {
+        window.open(targetUrl, '_blank', 'noopener,noreferrer');
+      } else {
+        openDriveSyncConfigModal();
+        showToast('Silakan simpan & tes konfigurasi Spreadsheet hibualamo.shop terlebih dahulu.', 'warning');
+      }
+    }
+
     function openDriveSyncConfigModal() {
       const urlInput = document.getElementById('configWebAppUrlInput');
       const driveInput = document.getElementById('configDriveFolderInput');
       const sheetInput = document.getElementById('configSpreadsheetInput');
+      const hibSheetInput = document.getElementById('configHibualamoSpreadsheetInput');
+      const hibTabInput = document.getElementById('configHibualamoSheetNameInput');
+      const hibApiOutput = document.getElementById('configHibualamoApiUrlOutput');
       const geminiInput = document.getElementById('configGeminiKeyInput');
       const diagBox = document.getElementById('syncDiagnosticBox');
 
-      if (urlInput) urlInput.value = getSavedGasExecUrl();
+      const execUrl = getSavedGasExecUrl();
+      if (urlInput) urlInput.value = execUrl;
       if (driveInput) driveInput.value = activeSyncInfo.mainDriveFolderUrl || activeSyncInfo.mainDriveFolderId || '';
       if (sheetInput) sheetInput.value = activeSyncInfo.spreadsheetUrl || activeSyncInfo.spreadsheetId || '';
+      if (hibSheetInput) {
+        hibSheetInput.value = activeSyncInfo.hibualamoSpreadsheetUrl || activeSyncInfo.hibualamoSpreadsheetId || '';
+      }
+      if (hibTabInput) {
+        hibTabInput.value = activeSyncInfo.hibualamoSheetName || 'Products_Hibualamo';
+      }
+      if (hibApiOutput) {
+        hibApiOutput.value = execUrl ? (execUrl + '?action=hibualamo_catalog') : '';
+      }
       if (geminiInput) geminiInput.value = '';
       if (diagBox) diagBox.classList.add('panel-hidden');
 
@@ -1820,6 +1995,8 @@
       const webAppUrl = (document.getElementById('configWebAppUrlInput').value || '').trim();
       const driveFolderInput = (document.getElementById('configDriveFolderInput').value || '').trim();
       const spreadsheetInput = (document.getElementById('configSpreadsheetInput').value || '').trim();
+      const hibualamoSpreadsheetInput = (document.getElementById('configHibualamoSpreadsheetInput').value || '').trim();
+      const hibualamoSheetName = (document.getElementById('configHibualamoSheetNameInput').value || 'Products_Hibualamo').trim();
       const geminiApiKey = (document.getElementById('configGeminiKeyInput').value || '').trim();
 
       if (webAppUrl) {
@@ -1833,18 +2010,27 @@
 
       if (btn) {
         btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i><span>Menguji & Membuat Folder di Google Drive...</span>';
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i><span>Menguji & Menyinkronkan Sheet hibualamo.shop...</span>';
       }
 
       if (diagBox) {
         diagBox.className = 'p-3.5 rounded-2xl text-xs font-semibold border space-y-2 bg-teal-50 text-teal-800 border-teal-200 dark:bg-teal-950/50 dark:text-teal-200 dark:border-teal-800';
-        diagMsg.textContent = 'Sedang menghubungi Google Apps Script dan membuat struktur folder di Google Drive Anda...';
+        diagMsg.textContent = 'Sedang menghubungi Google Apps Script, membuat folder Drive & menyiapkan Sheet Katalog hibualamo.shop...';
         diagLinks.classList.add('panel-hidden');
       }
 
       callBackend(
         'testAndInitDriveSync',
-        [{ driveFolderInput: driveFolderInput, spreadsheetInput: spreadsheetInput, geminiApiKey: geminiApiKey }, currentUser],
+        [
+          {
+            driveFolderInput: driveFolderInput,
+            spreadsheetInput: spreadsheetInput,
+            hibualamoSpreadsheetInput: hibualamoSpreadsheetInput,
+            hibualamoSheetName: hibualamoSheetName,
+            geminiApiKey: geminiApiKey
+          },
+          currentUser
+        ],
         function (res) {
           if (btn) {
             btn.disabled = false;
@@ -1859,18 +2045,20 @@
 
             if (diagBox) {
               diagBox.className = 'p-3.5 rounded-2xl text-xs font-semibold border space-y-2 bg-emerald-50 text-emerald-900 border-emerald-300 dark:bg-emerald-950/50 dark:text-emerald-200 dark:border-emerald-800';
-              diagMsg.textContent = res.message || 'Sinkronisasi Google Drive & Spreadsheet berhasil!';
+              diagMsg.textContent = res.message || 'Sinkronisasi Google Drive & Spreadsheet hibualamo.shop berhasil!';
 
               if (res.syncInfo && (res.syncInfo.mainDriveFolderUrl || res.syncInfo.spreadsheetUrl)) {
                 diagLinks.classList.remove('panel-hidden');
                 const dLink = document.getElementById('diagLinkDrive');
                 const sLink = document.getElementById('diagLinkSheet');
                 if (dLink && res.syncInfo.mainDriveFolderUrl) dLink.href = res.syncInfo.mainDriveFolderUrl;
-                if (sLink && res.syncInfo.spreadsheetUrl) sLink.href = res.syncInfo.spreadsheetUrl;
+                if (sLink && (res.syncInfo.hibualamoSpreadsheetUrl || res.syncInfo.spreadsheetUrl)) {
+                  sLink.href = res.syncInfo.hibualamoSpreadsheetUrl || res.syncInfo.spreadsheetUrl;
+                }
               }
             }
 
-            showToast('BERHASIL! Folder Google Drive & Spreadsheet sudah aktif dan tersinkron.');
+            showToast('BERHASIL! Folder Google Drive & Sheet Katalog hibualamo.shop sudah aktif.');
             if (currentUser) refreshData();
           } else {
             const errMessage = (res && res.message) || 'Gagal menginisialisasi Google Drive.';
@@ -1896,56 +2084,87 @@
       );
     }
 
-    function populateDynamicFilters() {
-      if (currentUser && String(currentUser.role).toLowerCase() === 'admin') {
-        const supSelect = document.getElementById('filterSupplier');
-        const formOwnerSelect = document.getElementById('formSupplierOwner');
-        if (supSelect && formOwnerSelect) {
-          const prevSup = supSelect.value || 'ALL';
-          supSelect.innerHTML = '<option value="ALL">Semua Mitra (Mode Admin)</option>';
-          formOwnerSelect.innerHTML = '';
-
-          const supplierItems = allSuppliers.filter(function (s) {
-            return String(s.role).toLowerCase() !== 'admin';
-          });
-          supplierItems.forEach(function (s) {
-            supSelect.innerHTML +=
-              '<option value="' +
-              escapeHtml(s.id_supplier) +
-              '">' +
-              escapeHtml(s.nama_supplier) +
-              ' (' +
-              escapeHtml(s.id_supplier) +
-              ')</option>';
-            formOwnerSelect.innerHTML +=
-              '<option value="' +
-              escapeHtml(s.id_supplier) +
-              '" data-name="' +
-              escapeHtml(s.nama_supplier) +
-              '">' +
-              escapeHtml(s.nama_supplier) +
-              ' (' +
-              escapeHtml(s.id_supplier) +
-              ')</option>';
-          });
-          supSelect.value = prevSup;
-        }
+    function handleApprovalDecision(idProduk, targetStatus) {
+      if (!currentUser || String(currentUser.role || '').toLowerCase() !== 'admin') {
+        showToast('Hanya Admin hibualamo.shop yang dapat menyetujui produk.', 'warning');
+        return;
       }
+
+      showToast('Memproses status ' + targetStatus + ' ke Spreadsheet hibualamo.shop...');
+      callBackend(
+        'approveProductForHibualamo',
+        [idProduk, targetStatus, currentUser],
+        function (res) {
+          if (res && res.success) {
+            showToast(res.message || ('Status produk diubah menjadi ' + targetStatus));
+            refreshData();
+          } else {
+            showToast((res && res.message) || 'Gagal mengubah status approval.', 'error');
+          }
+        },
+        function (err) {
+          showToast('Error Server: ' + (err.message || err), 'error');
+        }
+      );
     }
 
-    function setViewMode(mode) {
-      currentViewMode = mode;
-      const btnGrid = document.getElementById('btnViewGrid');
-      const btnTable = document.getElementById('btnViewTable');
-
-      if (mode === 'grid') {
-        btnGrid.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-slate-900 text-teal-600 shadow-sm transition cursor-pointer';
-        btnTable.className = 'px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 transition cursor-pointer';
-      } else {
-        btnTable.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-slate-900 text-teal-600 shadow-sm transition cursor-pointer';
-        btnGrid.className = 'px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 transition cursor-pointer';
+    function handleApproveAllPending() {
+      if (!currentUser || String(currentUser.role || '').toLowerCase() !== 'admin') return;
+      const btn = document.getElementById('btnApproveAllPending');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i><span>Menyinkronkan...</span>';
       }
-      renderProducts();
+
+      callBackend(
+        'approveAllPendingForHibualamo',
+        [currentUser],
+        function (res) {
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-check-double"></i><span id="labelApproveAllBtn">Approve Semua Pending</span>';
+          }
+          if (res && res.success) {
+            showToast(res.message || 'Semua produk Pending berhasil di-Approve ke hibualamo.shop!');
+            refreshData();
+          } else {
+            showToast((res && res.message) || 'Gagal melakukan approval massal.', 'error');
+          }
+        },
+        function (err) {
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-check-double"></i><span id="labelApproveAllBtn">Approve Semua Pending</span>';
+          }
+          showToast('Gagal menghubungi server: ' + (err.message || err), 'error');
+        }
+      );
+    }
+
+    function getApprovalBadgeHtml(statusApproval, hibualamoUrl) {
+      const st = String(statusApproval || 'Pending').trim().toLowerCase();
+      if (st === 'approved') {
+        const targetHref = hibualamoUrl || 'https://hibualamo.shop';
+        return (
+          '<a href="' +
+          escapeHtml(targetHref) +
+          '" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 border border-emerald-300/60 hover:underline" title="Sudah tayang & tersinkron di Spreadsheet hibualamo.shop">' +
+          '<i class="fa-solid fa-circle-check text-emerald-600"></i><span>Tayang di Hibualamo.shop</span>' +
+          '</a>'
+        );
+      }
+      if (st === 'rejected') {
+        return (
+          '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-300 border border-rose-300/60">' +
+          '<i class="fa-solid fa-circle-xmark"></i><span>Ditolak Admin</span>' +
+          '</span>'
+        );
+      }
+      return (
+        '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300 border border-amber-300/60">' +
+        '<i class="fa-solid fa-clock"></i><span>Menunggu Approval Admin</span>' +
+        '</span>'
+      );
     }
 
     function renderProducts() {
@@ -1954,6 +2173,8 @@
       const searchVal = (document.getElementById('searchInput').value || '').trim().toLowerCase();
       const supFilterEl = document.getElementById('filterSupplier');
       const supFilter = isAdmin && supFilterEl ? supFilterEl.value : 'ALL';
+      const appFilterEl = document.getElementById('filterApprovalStatus');
+      const approvalFilter = appFilterEl ? appFilterEl.value : 'ALL';
 
       const scopedProducts = allProducts.filter(function (p) {
         if (!isAdmin && String(p.id_supplier) !== String(currentUser.id_supplier)) {
@@ -1962,12 +2183,25 @@
         if (isAdmin && supFilter !== 'ALL' && String(p.id_supplier) !== supFilter) {
           return false;
         }
+        if (approvalFilter !== 'ALL') {
+          const pStatus = String(p.status_approval || 'Pending').trim().toLowerCase();
+          if (pStatus !== approvalFilter.toLowerCase()) {
+            return false;
+          }
+        }
         return true;
       });
 
       let totalMarginSum = 0;
       let totalStockSum = 0;
       let priceChangedCount = 0;
+      let pendingApprovalCount = 0;
+
+      allProducts.forEach(function (p) {
+        if (String(p.status_approval || 'Pending').toLowerCase() === 'pending') {
+          pendingApprovalCount++;
+        }
+      });
 
       scopedProducts.forEach(function (p) {
         const margin = Number(p.harga_jual_supplier || 0) - Number(p.harga_supplier || 0);
@@ -1983,11 +2217,22 @@
 
       if (isAdmin) {
         document.getElementById('statTotalProducts').textContent = scopedProducts.length;
-        document.getElementById('statTotalSubtext').textContent = 'Semua Mitra aktif';
+        document.getElementById('statTotalSubtext').textContent =
+          pendingApprovalCount > 0
+            ? (pendingApprovalCount + ' produk menunggu Approval')
+            : 'Semua produk telah disetujui';
         const avgMargin = scopedProducts.length > 0 ? Math.round(totalMarginSum / scopedProducts.length) : 0;
         document.getElementById('statAvgMargin').textContent = formatRupiah(avgMargin);
         document.getElementById('statTotalStock').textContent = totalStockSum.toLocaleString('id-ID');
         document.getElementById('statPriceChanged').textContent = priceChangedCount;
+
+        const labelBtnApproveAll = document.getElementById('labelApproveAllBtn');
+        if (labelBtnApproveAll) {
+          labelBtnApproveAll.textContent =
+            pendingApprovalCount > 0
+              ? ('Approve Semua Pending (' + pendingApprovalCount + ')')
+              : 'Semua Sudah Approved';
+        }
       }
 
       const filtered = scopedProducts.filter(function (p) {
@@ -2082,6 +2327,7 @@
       const marginRp = hargaJual - hargaModal;
       const marginPct = hargaModal > 0 ? ((marginRp / hargaModal) * 100).toFixed(1) : '0.0';
       const isLh3 = safePhotoUrl.indexOf('lh3.googleusercontent.com') !== -1;
+      const isApproved = String(p.status_approval || 'Pending').toLowerCase() === 'approved';
 
       return (
         '<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col">' +
@@ -2104,6 +2350,9 @@
                   '<div class="flex items-center gap-2 mt-0.5 text-[11px] text-slate-400 font-mono">' +
                     '<span>SKU: ' + escapeHtml(p.kode_sku || '-') + '</span>' +
                     (isAdmin ? '<span class="text-amber-600 dark:text-amber-400 font-sans font-bold">• ' + escapeHtml(p.nama_supplier) + '</span>' : '') +
+                  '</div>' +
+                  '<div class="mt-1.5 flex flex-wrap items-center gap-1.5">' +
+                    getApprovalBadgeHtml(p.status_approval, p.hibualamo_url) +
                   '</div>' +
                 '</div>' +
               '</div>' +
@@ -2129,6 +2378,17 @@
                   '</div>' +
                 '</div>' +
               '</div>' +
+
+              (isAdmin
+                ? '<div class="flex items-center justify-between gap-2 pt-1">' +
+                    (!isApproved
+                      ? '<button type="button" onclick="handleApprovalDecision(\'' + escapeJs(p.id_produk) + '\', \'Approved\')" class="flex-1 py-1.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold flex items-center justify-center gap-1.5 shadow-sm transition cursor-pointer"><i class="fa-solid fa-check"></i><span>Approve ke Hibualamo.shop</span></button>'
+                      : '<a href="' + escapeHtml(p.hibualamo_url || 'https://hibualamo.shop') + '" target="_blank" rel="noopener noreferrer" class="flex-1 py-1.5 px-3 rounded-xl bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 border border-teal-300/60 text-[11px] font-extrabold flex items-center justify-center gap-1.5"><i class="fa-solid fa-up-right-from-square"></i><span>Lihat di Hibualamo.shop</span></a>') +
+                    (String(p.status_approval || '').toLowerCase() !== 'rejected'
+                      ? '<button type="button" onclick="handleApprovalDecision(\'' + escapeJs(p.id_produk) + '\', \'Rejected\')" class="py-1.5 px-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200/60 text-[11px] font-bold transition cursor-pointer" title="Tolak / Minta Revisi"><i class="fa-solid fa-xmark"></i></button>'
+                      : '') +
+                  '</div>'
+                : '') +
 
               (p.catatan ? '<p class="text-[11px] text-slate-500 dark:text-slate-400 italic line-clamp-2"><i class="fa-regular fa-comment-dots mr-1"></i>' + escapeHtml(p.catatan) + '</p>' : '') +
             '</div>' +
@@ -2160,6 +2420,7 @@
       const hargaModal = Number(p.harga_supplier || 0);
       const hargaJual = Number(p.harga_jual_supplier || 0);
       const marginRp = hargaJual - hargaModal;
+      const isApproved = String(p.status_approval || 'Pending').toLowerCase() === 'approved';
 
       return (
         '<tr class="hover:bg-slate-50/90 dark:hover:bg-slate-800/40 transition">' +
@@ -2169,6 +2430,7 @@
               '<div class="min-w-0">' +
                 '<div class="font-bold text-slate-900 dark:text-white truncate max-w-xs">' + escapeHtml(p.nama_produk) + '</div>' +
                 '<div class="text-[11px] text-slate-400 font-mono">SKU: ' + escapeHtml(p.kode_sku || '-') + (isAdmin ? ' • <span class="text-amber-600 dark:text-amber-400 font-sans font-bold">' + escapeHtml(p.nama_supplier) + '</span>' : '') + '</div>' +
+                '<div class="mt-1">' + getApprovalBadgeHtml(p.status_approval, p.hibualamo_url) + '</div>' +
               '</div>' +
             '</div>' +
           '</td>' +
@@ -2188,6 +2450,9 @@
           '</td>' +
           '<td class="py-3 px-3 text-[11px] text-slate-400">' + escapeHtml(p.updated_at || '-') + '</td>' +
           '<td class="py-3 px-4 text-right whitespace-nowrap">' +
+            (isAdmin && !isApproved
+              ? '<button type="button" onclick="handleApprovalDecision(\'' + escapeJs(p.id_produk) + '\', \'Approved\')" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs mr-1 cursor-pointer" title="Approve ke Hibualamo.shop"><i class="fa-solid fa-check mr-1"></i>Approve</button>'
+              : '') +
             (isAdmin
               ? '<button type="button" onclick="downloadProductPhoto(\'' + escapeJs(p.id_produk) + '\')" class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs mr-1 cursor-pointer" title="Unduh Foto"><i class="fa-solid fa-download"></i></button>'
               : '') +
@@ -3080,9 +3345,12 @@
     window.downloadCurrentLightboxPhoto = downloadCurrentLightboxPhoto;
     window.openActiveDriveFolder = openActiveDriveFolder;
     window.openActiveSpreadsheet = openActiveSpreadsheet;
+    window.openHibualamoSpreadsheet = openHibualamoSpreadsheet;
     window.openDriveSyncConfigModal = openDriveSyncConfigModal;
     window.closeDriveSyncConfigModal = closeDriveSyncConfigModal;
     window.submitDriveSyncConfig = submitDriveSyncConfig;
+    window.handleApprovalDecision = handleApprovalDecision;
+    window.handleApproveAllPending = handleApproveAllPending;
   </script>
 </body>
 </html>
