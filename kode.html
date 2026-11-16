@@ -2,7 +2,8 @@
  * ============================================================================
  * FILE 2: kode.gs (GOOGLE APPS SCRIPT REST API BACKEND + AI PRODUCT STUDIO)
  * File ini dipasang di Google Apps Script untuk melayani request dari
- * aplikasi frontend index.html yang di-deploy di Vercel.
+ * aplikasi frontend index.html yang di-deploy di Vercel serta sinkronisasi
+ * otomatis produk Approved ke Spreadsheet hibualamo.shop (Skenario B).
  * ============================================================================
  */
 
@@ -45,6 +46,7 @@ const DEFAULT_ACCOUNTS_ = [
 
 /**
  * Handler doGet(e) untuk mengecek status API Backend dari Vercel
+ * & Menyediakan Endpoint Katalog Publik hibualamo.shop (?action=hibualamo_catalog)
  */
 function doGet(e) {
   if (e && e.parameter && e.parameter.action === 'ping') {
@@ -57,6 +59,12 @@ function doGet(e) {
     ).setMimeType(ContentService.MimeType.JSON);
   }
 
+  if (e && e.parameter && e.parameter.action === 'hibualamo_catalog') {
+    const catalogResult = getHibualamoApprovedCatalog_();
+    return ContentService.createTextOutput(JSON.stringify(catalogResult))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
   try {
     return HtmlService.createHtmlOutputFromFile('index')
       .setTitle('Pendataan Harga Mitra')
@@ -67,7 +75,7 @@ function doGet(e) {
       JSON.stringify({
         success: true,
         status: 'API_ONLY_MODE',
-        message: 'Backend Google Apps Script (Database Spreadsheet, Google Drive & AI Product Studio) Aktif untuk Vercel Frontend.'
+        message: 'Backend Google Apps Script (Database Spreadsheet, Google Drive & Hibualamo.shop Sync) Aktif untuk Vercel Frontend.'
       })
     ).setMimeType(ContentService.MimeType.JSON);
   }
@@ -99,6 +107,12 @@ function doPost(e) {
         break;
       case 'saveProductData':
         result = saveProductData(args[0], args[1]);
+        break;
+      case 'approveProductForHibualamo':
+        result = approveProductForHibualamo(args[0], args[1], args[2]);
+        break;
+      case 'approveAllPendingForHibualamo':
+        result = approveAllPendingForHibualamo(args[0]);
         break;
       case 'deleteProductData':
         result = deleteProductData(args[0], args[1]);
@@ -614,6 +628,9 @@ function getPortalData(sessionUser) {
         : normalizedPhoto;
 
       const parsedStock = isNaN(Number(r[11])) ? 0 : Number(r[11]);
+      const rawApproval = String(r[16] || '').trim();
+      const statusApproval = rawApproval || 'Pending';
+      const approvedAt = formatCellDate_(r[17]);
 
       products.push({
         id_produk: String(r[0] || ''),
@@ -632,7 +649,10 @@ function getPortalData(sessionUser) {
         drive_file_id: extractedFileId,
         download_url: directDownloadUrl,
         catatan: String(r[14] || ''),
-        updated_at: formatCellDate_(r[15])
+        updated_at: formatCellDate_(r[15]),
+        status_approval: statusApproval,
+        approved_at: approvedAt,
+        hibualamo_url: 'https://hibualamo.shop/?sku=' + encodeURIComponent(String(r[3] || r[0] || ''))
       });
     }
 
@@ -672,6 +692,8 @@ function getPortalData(sessionUser) {
     }
     const savedSpreadsheetId = db.ss ? db.ss.getId() : (scriptProps.getProperty('SPREADSHEET_ID') || '');
     const hasGeminiKey = Boolean(scriptProps.getProperty('GEMINI_API_KEY') || DEFAULT_GEMINI_API_KEY_);
+    const hibualamoSheetId = scriptProps.getProperty('HIBUALAMO_SPREADSHEET_ID') || savedSpreadsheetId;
+    const hibualamoTabName = scriptProps.getProperty('HIBUALAMO_SHEET_NAME') || 'Products_Hibualamo';
 
     return {
       success: true,
@@ -683,7 +705,10 @@ function getPortalData(sessionUser) {
         mainDriveFolderId: savedDriveFolderId,
         mainDriveFolderUrl: savedDriveFolderId ? ('https://drive.google.com/drive/folders/' + savedDriveFolderId) : '',
         supplierFolderUrl: currentSupplierFolderUrl,
-        hasGeminiKey: hasGeminiKey
+        hasGeminiKey: hasGeminiKey,
+        hibualamoSpreadsheetId: hibualamoSheetId,
+        hibualamoSpreadsheetUrl: hibualamoSheetId ? ('https://docs.google.com/spreadsheets/d/' + hibualamoSheetId) : '',
+        hibualamoSheetName: hibualamoTabName
       }
     };
   } catch (err) {
@@ -872,6 +897,16 @@ function saveProductData(payload, sessionUser) {
           const finalFotoUrl = fotoUrl || oldPhotoUrlInSheet;
           const finalDownloadUrl = driveDownloadCell || String(row[13] || '');
 
+          // Jika Mitra yang mengubah produk, status kembali menjadi Pending menunggu Approval Admin.
+          // Jika Admin yang menyimpan, pertahankan status_approval atau set sesuai payload.
+          const currentApproval = String(row[16] || 'Pending').trim();
+          const nextApprovalStatus = isAdmin
+            ? String(payload.status_approval || currentApproval || 'Approved')
+            : 'Pending';
+          const nextApprovedAt = nextApprovalStatus === 'Approved'
+            ? (formatCellDate_(row[17]) || now)
+            : '';
+
           const updatedRow = [
             String(row[0]),
             String(row[1]),
@@ -888,16 +923,28 @@ function saveProductData(payload, sessionUser) {
             finalFotoUrl,
             finalDownloadUrl,
             String(payload.catatan !== undefined ? payload.catatan : row[14]),
-            now
+            now,
+            nextApprovalStatus,
+            nextApprovedAt
           ];
 
           sheet.getRange(i + 1, 1, 1, updatedRow.length).setValues([updatedRow]);
 
+          // Sinkronkan ke Spreadsheet hibualamo.shop sesuai status approval
+          try {
+            syncProductRowToHibualamoSheet_(updatedRow);
+          } catch (syncErr) {
+            Logger.log('Info syncProductRowToHibualamoSheet_: ' + syncErr.message);
+          }
+
           return {
             success: true,
-            message: 'Data produk & file di Sub-Folder Google Drive berhasil disinkronkan!',
+            message: isAdmin
+              ? 'Data produk & file di Sub-Folder Google Drive berhasil disinkronkan!'
+              : 'Perubahan produk disimpan & menunggu Approval Admin hibualamo.shop!',
             foto_url: finalFotoUrl,
-            download_url: finalDownloadUrl
+            download_url: finalDownloadUrl,
+            status_approval: nextApprovalStatus
           };
         }
       }
@@ -916,6 +963,9 @@ function saveProductData(payload, sessionUser) {
         fotoUrl = 'https://placehold.co/200x200/0f766e/ffffff?text=' + encodedText;
       }
 
+      const initialApproval = isAdmin ? 'Approved' : 'Pending';
+      const initialApprovedAt = isAdmin ? now : '';
+
       const newRow = [
         newProductId,
         targetSupplierId,
@@ -932,17 +982,30 @@ function saveProductData(payload, sessionUser) {
         fotoUrl,
         driveDownloadCell || fotoUrl,
         String(payload.catatan || ''),
-        now
+        now,
+        initialApproval,
+        initialApprovedAt
       ];
 
       sheet.appendRow(newRow);
 
+      if (initialApproval === 'Approved') {
+        try {
+          syncProductRowToHibualamoSheet_(newRow);
+        } catch (syncErr) {
+          Logger.log('Info sync newRow hibualamo: ' + syncErr.message);
+        }
+      }
+
       return {
         success: true,
-        message: 'Produk baru berhasil disimpan ke Spreadsheet & Sub-Folder Google Drive (' + targetSupplierId + ')!',
+        message: isAdmin
+          ? 'Produk baru berhasil disimpan & langsung tayang di hibualamo.shop!'
+          : 'Produk baru berhasil disimpan & menunggu Approval Admin hibualamo.shop!',
         foto_url: fotoUrl,
         download_url: driveDownloadCell || fotoUrl,
-        folder_url: createdSubFolderUrl
+        folder_url: createdSubFolderUrl,
+        status_approval: initialApproval
       };
     }
   } catch (err) {
@@ -952,6 +1015,268 @@ function saveProductData(payload, sessionUser) {
     };
   } finally {
     lock.releaseLock();
+  }
+}
+
+/**
+ * ============================================================================
+ * SKENARIO B: APPROVAL ADMIN & SINKRONISASI OTOMATIS KE SPREADSHEET HIBUALAMO.SHOP
+ * ============================================================================
+ */
+function getOrCreateHibualamoTargetSheet_() {
+  const scriptProps = PropertiesService.getScriptProperties();
+  const db = ensureDatabaseReady_();
+
+  const customHibualamoId =
+    scriptProps.getProperty('HIBUALAMO_SPREADSHEET_ID') ||
+    (typeof CUSTOM_HIBUALAMO_SPREADSHEET_ID_OR_URL !== 'undefined'
+      ? extractGoogleId_(CUSTOM_HIBUALAMO_SPREADSHEET_ID_OR_URL)
+      : '');
+  const targetSheetName =
+    scriptProps.getProperty('HIBUALAMO_SHEET_NAME') ||
+    (typeof CUSTOM_HIBUALAMO_SHEET_NAME !== 'undefined' && CUSTOM_HIBUALAMO_SHEET_NAME
+      ? CUSTOM_HIBUALAMO_SHEET_NAME
+      : 'Products_Hibualamo');
+
+  let targetSs = db.ss;
+  if (customHibualamoId && customHibualamoId !== db.ss.getId()) {
+    try {
+      targetSs = SpreadsheetApp.openById(customHibualamoId);
+    } catch (e) {
+      Logger.log('Fallback ke Spreadsheet utama karena gagal membuka Spreadsheet Hibualamo: ' + e.message);
+      targetSs = db.ss;
+    }
+  }
+
+  let sheetHibualamo = targetSs.getSheetByName(targetSheetName);
+  if (!sheetHibualamo) {
+    sheetHibualamo = targetSs.insertSheet(targetSheetName);
+  }
+
+  if (sheetHibualamo.getLastRow() === 0) {
+    const headers = [
+      'id_produk',
+      'kode_sku',
+      'nama_produk',
+      'kategori',
+      'satuan',
+      'harga_jual',
+      'total_stok',
+      'foto_url',
+      'nama_mitra',
+      'id_mitra',
+      'catatan',
+      'hibualamo_link',
+      'approved_at'
+    ];
+    sheetHibualamo.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheetHibualamo.getRange(1, 1, 1, headers.length).setFontWeight('bold').setBackground('#0d9488').setFontColor('#ffffff');
+  }
+
+  return {
+    ss: targetSs,
+    sheet: sheetHibualamo
+  };
+}
+
+/**
+ * Menyalin / memperbarui / menghapus baris produk di Sheet Katalog Hibualamo.shop
+ * Hanya produk berstatus "Approved" yang berada di Sheet Hibualamo.shop.
+ */
+function syncProductRowToHibualamoSheet_(productRow) {
+  if (!productRow || !productRow[0]) return;
+  const target = getOrCreateHibualamoTargetSheet_();
+  const sheet = target.sheet;
+  const data = sheet.getDataRange().getValues();
+
+  const idProduk = String(productRow[0] || '');
+  const statusApproval = String(productRow[16] || 'Pending').trim();
+  const hibualamoLink = 'https://hibualamo.shop/?sku=' + encodeURIComponent(String(productRow[3] || idProduk));
+
+  const catalogRow = [
+    idProduk,
+    String(productRow[3] || ''),
+    String(productRow[4] || ''),
+    String(productRow[5] || 'Umum'),
+    String(productRow[6] || 'Pcs'),
+    Number(productRow[8] || 0), // Harga Jual yang tampil di hibualamo.shop
+    Number(productRow[11] || 0), // Total Stok
+    convertDriveToLh3Url(productRow[12]),
+    String(productRow[2] || ''), // Nama Mitra
+    String(productRow[1] || ''), // ID Mitra
+    String(productRow[14] || ''),
+    hibualamoLink,
+    formatCellDate_(productRow[17]) || Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss')
+  ];
+
+  let foundIndex = -1;
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][0]) === idProduk) {
+      foundIndex = i + 1;
+      break;
+    }
+  }
+
+  if (statusApproval.toLowerCase() === 'approved') {
+    if (foundIndex !== -1) {
+      sheet.getRange(foundIndex, 1, 1, catalogRow.length).setValues([catalogRow]);
+    } else {
+      sheet.appendRow(catalogRow);
+    }
+  } else {
+    // Jika status berubah menjadi Pending atau Rejected, hapus dari katalog tayang hibualamo.shop
+    if (foundIndex !== -1) {
+      sheet.deleteRow(foundIndex);
+    }
+  }
+}
+
+/**
+ * Fungsi Admin untuk Menyetujui (Approve) atau Menolak (Reject) Produk ke hibualamo.shop
+ */
+function approveProductForHibualamo(idProduk, newStatus, sessionUser) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+
+  try {
+    if (!sessionUser || String(sessionUser.role || '').toLowerCase() !== 'admin') {
+      throw new Error('Hanya Admin hibualamo.shop yang dapat melakukan Approval produk.');
+    }
+
+    const cleanStatus = String(newStatus || 'Approved').trim();
+    const db = ensureDatabaseReady_();
+    const sheet = db.sheetProducts;
+    const data = sheet.getDataRange().getValues();
+    const now = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === String(idProduk)) {
+        const approvedTime = cleanStatus.toLowerCase() === 'approved' ? now : '';
+        sheet.getRange(i + 1, 17, 1, 2).setValues([[cleanStatus, approvedTime]]);
+
+        const updatedRow = data[i].slice();
+        updatedRow[16] = cleanStatus;
+        updatedRow[17] = approvedTime;
+
+        syncProductRowToHibualamoSheet_(updatedRow);
+
+        return {
+          success: true,
+          status_approval: cleanStatus,
+          approved_at: approvedTime,
+          message:
+            cleanStatus.toLowerCase() === 'approved'
+              ? 'Produk "' + data[i][4] + '" DISETUJUI & otomatis disinkronkan ke Spreadsheet hibualamo.shop!'
+              : 'Status produk "' + data[i][4] + '" diubah menjadi ' + cleanStatus + '.'
+        };
+      }
+    }
+
+    return {
+      success: false,
+      message: 'Produk tidak ditemukan.'
+    };
+  } catch (err) {
+    return {
+      success: false,
+      message: 'Gagal memproses approval: ' + err.message
+    };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/**
+ * Fungsi Admin untuk Approve Sekaligus Semua Produk yang Masih Pending ke hibualamo.shop
+ */
+function approveAllPendingForHibualamo(sessionUser) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(15000);
+
+  try {
+    if (!sessionUser || String(sessionUser.role || '').toLowerCase() !== 'admin') {
+      throw new Error('Hanya Admin hibualamo.shop yang dapat melakukan Approval massal.');
+    }
+
+    const db = ensureDatabaseReady_();
+    const sheet = db.sheetProducts;
+    const data = sheet.getDataRange().getValues();
+    const now = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+    let approvedCount = 0;
+
+    for (let i = 1; i < data.length; i++) {
+      if (!data[i][0]) continue;
+      const currentStatus = String(data[i][16] || 'Pending').trim();
+      if (currentStatus.toLowerCase() !== 'approved') {
+        sheet.getRange(i + 1, 17, 1, 2).setValues([['Approved', now]]);
+        const updatedRow = data[i].slice();
+        updatedRow[16] = 'Approved';
+        updatedRow[17] = now;
+        syncProductRowToHibualamoSheet_(updatedRow);
+        approvedCount++;
+      }
+    }
+
+    return {
+      success: true,
+      approvedCount: approvedCount,
+      message:
+        approvedCount > 0
+          ? (approvedCount + ' produk berhasil di-Approve & disinkronkan ke Spreadsheet hibualamo.shop!')
+          : 'Semua produk sudah berstatus Approved.'
+    };
+  } catch (err) {
+    return {
+      success: false,
+      message: 'Gagal melakukan approval massal: ' + err.message
+    };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/**
+ * Endpoint JSON Publik (?action=hibualamo_catalog) yang hanya mengeluarkan produk Approved
+ */
+function getHibualamoApprovedCatalog_() {
+  try {
+    const db = ensureDatabaseReady_();
+    const data = db.sheetProducts.getDataRange().getValues();
+    const items = [];
+
+    for (let i = 1; i < data.length; i++) {
+      const r = data[i];
+      if (!r[0]) continue;
+      const statusApproval = String(r[16] || 'Pending').trim();
+      if (statusApproval.toLowerCase() !== 'approved') continue;
+
+      items.push({
+        id_produk: String(r[0] || ''),
+        kode_sku: String(r[3] || ''),
+        nama_produk: String(r[4] || ''),
+        kategori: String(r[5] || 'Umum'),
+        satuan: String(r[6] || 'Pcs'),
+        harga_jual: Number(r[8] || 0),
+        total_stok: Number(r[11] || 0),
+        foto_url: convertDriveToLh3Url(r[12]),
+        nama_mitra: String(r[2] || ''),
+        catatan: String(r[14] || ''),
+        approved_at: formatCellDate_(r[17]),
+        hibualamo_url: 'https://hibualamo.shop/?sku=' + encodeURIComponent(String(r[3] || r[0] || ''))
+      });
+    }
+
+    return {
+      success: true,
+      store: 'hibualamo.shop',
+      total_approved: items.length,
+      products: items.reverse()
+    };
+  } catch (err) {
+    return {
+      success: false,
+      message: err.message
+    };
   }
 }
 
@@ -977,6 +1302,12 @@ function deleteProductData(idProduk, sessionUser) {
         const photoToTrash = String(data[i][13] || data[i][12] || '');
         trashOldDriveFile_(photoToTrash);
 
+        try {
+          const fakeRejectedRow = data[i].slice();
+          fakeRejectedRow[16] = 'Deleted';
+          syncProductRowToHibualamoSheet_(fakeRejectedRow);
+        } catch (e) {}
+
         sheet.deleteRow(i + 1);
         return {
           success: true,
@@ -1000,10 +1331,12 @@ function deleteProductData(idProduk, sessionUser) {
 
 /**
  * 7. Kelola Akun Login Mitra & Otomatis Buat/Update Sub-Folder di Google Drive
+ * (Juga mendukung pendaftaran mandiri Mitra jika dipanggil dengan flag isSelfRegistration)
  */
 function saveSupplierAccount(supPayload, sessionUser) {
   try {
-    if (!sessionUser || String(sessionUser.role || '').toLowerCase() !== 'admin') {
+    const isSelfReg = Boolean(supPayload && supPayload.isSelfRegistration);
+    if (!isSelfReg && (!sessionUser || String(sessionUser.role || '').toLowerCase() !== 'admin')) {
       throw new Error('Hanya Admin yang dapat mengelola akun login Mitra.');
     }
 
@@ -1124,22 +1457,44 @@ function testAndInitDriveSync(configPayload, sessionUser) {
       scriptProps.setProperty('SPREADSHEET_ID', testSs.getId());
     }
 
+    if (configPayload && configPayload.hibualamoSpreadsheetInput !== undefined) {
+      const rawHib = String(configPayload.hibualamoSpreadsheetInput || '').trim();
+      if (rawHib) {
+        const extractedHibId = extractGoogleId_(rawHib);
+        if (!extractedHibId) {
+          throw new Error('Format ID atau Link Spreadsheet hibualamo.shop tidak valid.');
+        }
+        const testHibSs = SpreadsheetApp.openById(extractedHibId);
+        scriptProps.setProperty('HIBUALAMO_SPREADSHEET_ID', testHibSs.getId());
+      } else {
+        scriptProps.deleteProperty('HIBUALAMO_SPREADSHEET_ID');
+      }
+    }
+
+    if (configPayload && configPayload.hibualamoSheetName) {
+      scriptProps.setProperty('HIBUALAMO_SHEET_NAME', String(configPayload.hibualamoSheetName).trim());
+    }
+
     if (configPayload && configPayload.geminiApiKey) {
       scriptProps.setProperty('GEMINI_API_KEY', String(configPayload.geminiApiKey).trim());
     }
 
     const setupResult = setupDatabase();
+    const hibTarget = getOrCreateHibualamoTargetSheet_();
 
     return {
       success: true,
-      message: 'BERHASIL! Google Drive, Spreadsheet & Konfigurasi AI Studio telah aktif dan seluruh Sub-Folder Mitra sudah dibuat.',
+      message: 'BERHASIL! Google Drive, Spreadsheet Utama, Sheet Katalog hibualamo.shop & AI Studio telah aktif.',
       syncInfo: {
         spreadsheetId: setupResult.spreadsheetId,
         spreadsheetUrl: setupResult.spreadsheetUrl,
         mainDriveFolderId: setupResult.mainDriveFolderId,
         mainDriveFolderUrl: setupResult.mainDriveFolderUrl,
         subFolderCount: setupResult.subFolderCount,
-        hasGeminiKey: Boolean(scriptProps.getProperty('GEMINI_API_KEY') || DEFAULT_GEMINI_API_KEY_)
+        hasGeminiKey: Boolean(scriptProps.getProperty('GEMINI_API_KEY') || DEFAULT_GEMINI_API_KEY_),
+        hibualamoSpreadsheetId: hibTarget.ss.getId(),
+        hibualamoSpreadsheetUrl: hibTarget.ss.getUrl(),
+        hibualamoSheetName: hibTarget.sheet.getName()
       }
     };
   } catch (err) {
