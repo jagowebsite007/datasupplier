@@ -1053,24 +1053,35 @@ function getOrCreateHibualamoTargetSheet_() {
     sheetHibualamo = targetSs.insertSheet(targetSheetName);
   }
 
+  const headers = [
+    'ID_Produk',
+    'Nama',
+    'Kategori',
+    'Harga_Supplier',
+    'Harga_Asli',
+    'Harga_Diskon',
+    'Stok',
+    'Terjual',
+    'Rating',
+    'URL_Gambar',
+    'Varian',
+    'Is_FlashSale',
+    'Badge',
+    'Deskripsi',
+    'ID_Supplier',
+    'Nama_Supplier'
+  ];
+
   if (sheetHibualamo.getLastRow() === 0) {
-    const headers = [
-      'id_produk',
-      'kode_sku',
-      'nama_produk',
-      'kategori',
-      'satuan',
-      'harga_jual',
-      'total_stok',
-      'foto_url',
-      'nama_mitra',
-      'id_mitra',
-      'catatan',
-      'hibualamo_link',
-      'approved_at'
-    ];
     sheetHibualamo.getRange(1, 1, 1, headers.length).setValues([headers]);
     sheetHibualamo.getRange(1, 1, 1, headers.length).setFontWeight('bold').setBackground('#0d9488').setFontColor('#ffffff');
+  } else {
+    // Pastikan header kolom di baris 1 sesuai format 16 kolom hibualamo.shop
+    const firstRow = sheetHibualamo.getRange(1, 1, 1, headers.length).getValues()[0];
+    if (String(firstRow[0] || '') !== 'ID_Produk' || String(firstRow[3] || '') !== 'Harga_Supplier') {
+      sheetHibualamo.getRange(1, 1, 1, headers.length).setValues([headers]);
+      sheetHibualamo.getRange(1, 1, 1, headers.length).setFontWeight('bold').setBackground('#0d9488').setFontColor('#ffffff');
+    }
   }
 
   return {
@@ -1082,6 +1093,8 @@ function getOrCreateHibualamoTargetSheet_() {
 /**
  * Menyalin / memperbarui / menghapus baris produk di Sheet Katalog Hibualamo.shop
  * Hanya produk berstatus "Approved" yang berada di Sheet Hibualamo.shop.
+ * Format 16 Kolom:
+ * [ID_Produk, Nama, Kategori, Harga_Supplier, Harga_Asli, Harga_Diskon, Stok, Terjual, Rating, URL_Gambar, Varian, Is_FlashSale, Badge, Deskripsi, ID_Supplier, Nama_Supplier]
  */
 function syncProductRowToHibualamoSheet_(productRow) {
   if (!productRow || !productRow[0]) return;
@@ -1091,31 +1104,52 @@ function syncProductRowToHibualamoSheet_(productRow) {
 
   const idProduk = String(productRow[0] || '');
   const statusApproval = String(productRow[16] || 'Pending').trim();
-  const hibualamoLink = 'https://hibualamo.shop/?sku=' + encodeURIComponent(String(productRow[3] || idProduk));
 
-  const catalogRow = [
-    idProduk,
-    String(productRow[3] || ''),
-    String(productRow[4] || ''),
-    String(productRow[5] || 'Umum'),
-    String(productRow[6] || 'Pcs'),
-    Number(productRow[8] || 0), // Harga Jual yang tampil di hibualamo.shop
-    Number(productRow[11] || 0), // Total Stok
-    convertDriveToLh3Url(productRow[12]),
-    String(productRow[2] || ''), // Nama Mitra
-    String(productRow[1] || ''), // ID Mitra
-    String(productRow[14] || ''),
-    hibualamoLink,
-    formatCellDate_(productRow[17]) || Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss')
-  ];
+  const hargaSupplier = Number(productRow[7] || 0);
+  const hargaJual = Number(productRow[8] || 0);
+  const hargaJualLama = Number(productRow[10] || 0);
+
+  // Jika harga jual turun dibanding harga jual lama, tampilkan harga lama sebagai Harga_Asli (coret)
+  // dan harga jual baru sebagai Harga_Diskon
+  const hargaAsliDefault = (hargaJualLama > hargaJual) ? hargaJualLama : hargaJual;
+  const hargaDiskonDefault = hargaJual;
 
   let foundIndex = -1;
+  let existingRow = null;
   for (let i = 1; i < data.length; i++) {
     if (String(data[i][0]) === idProduk) {
       foundIndex = i + 1;
+      existingRow = data[i];
       break;
     }
   }
+
+  // Pertahankan nilai Terjual, Rating, Is_FlashSale, dan Badge jika produk sudah ada di sheet hibualamo.shop
+  const terjualVal = (existingRow && existingRow[7] !== '' && existingRow[7] !== undefined) ? existingRow[7] : 0;
+  const ratingVal = (existingRow && existingRow[8] !== '' && existingRow[8] !== undefined) ? existingRow[8] : 5.0;
+  const varianVal = String(productRow[6] || (existingRow && existingRow[10]) || 'Pcs');
+  const isFlashSaleVal = (existingRow && existingRow[11] !== '' && existingRow[11] !== undefined) ? existingRow[11] : false;
+  const badgeVal = (existingRow && existingRow[12] !== '' && existingRow[12] !== undefined) ? existingRow[12] : 'Mitra Resmi';
+  const deskripsiVal = String(productRow[14] || (existingRow && existingRow[13]) || '');
+
+  const catalogRow = [
+    idProduk,                                // 1. ID_Produk
+    String(productRow[4] || ''),             // 2. Nama
+    String(productRow[5] || 'Umum'),         // 3. Kategori
+    hargaSupplier,                           // 4. Harga_Supplier
+    hargaAsliDefault,                        // 5. Harga_Asli
+    hargaDiskonDefault,                      // 6. Harga_Diskon
+    Number(productRow[11] || 0),             // 7. Stok
+    terjualVal,                              // 8. Terjual
+    ratingVal,                               // 9. Rating
+    convertDriveToLh3Url(productRow[12]),    // 10. URL_Gambar (lh3.googleusercontent.com)
+    varianVal,                               // 11. Varian (Satuan)
+    isFlashSaleVal,                          // 12. Is_FlashSale
+    badgeVal,                                // 13. Badge
+    deskripsiVal,                            // 14. Deskripsi (Catatan)
+    String(productRow[1] || ''),             // 15. ID_Supplier
+    String(productRow[2] || '')              // 16. Nama_Supplier
+  ];
 
   if (statusApproval.toLowerCase() === 'approved') {
     if (foundIndex !== -1) {
@@ -1250,19 +1284,28 @@ function getHibualamoApprovedCatalog_() {
       const statusApproval = String(r[16] || 'Pending').trim();
       if (statusApproval.toLowerCase() !== 'approved') continue;
 
+      const hargaSupplier = Number(r[7] || 0);
+      const hargaJual = Number(r[8] || 0);
+      const hargaJualLama = Number(r[10] || 0);
+      const hargaAsli = (hargaJualLama > hargaJual) ? hargaJualLama : hargaJual;
+
       items.push({
-        id_produk: String(r[0] || ''),
-        kode_sku: String(r[3] || ''),
-        nama_produk: String(r[4] || ''),
-        kategori: String(r[5] || 'Umum'),
-        satuan: String(r[6] || 'Pcs'),
-        harga_jual: Number(r[8] || 0),
-        total_stok: Number(r[11] || 0),
-        foto_url: convertDriveToLh3Url(r[12]),
-        nama_mitra: String(r[2] || ''),
-        catatan: String(r[14] || ''),
-        approved_at: formatCellDate_(r[17]),
-        hibualamo_url: 'https://hibualamo.shop/?sku=' + encodeURIComponent(String(r[3] || r[0] || ''))
+        ID_Produk: String(r[0] || ''),
+        Nama: String(r[4] || ''),
+        Kategori: String(r[5] || 'Umum'),
+        Harga_Supplier: hargaSupplier,
+        Harga_Asli: hargaAsli,
+        Harga_Diskon: hargaJual,
+        Stok: Number(r[11] || 0),
+        Terjual: 0,
+        Rating: 5.0,
+        URL_Gambar: convertDriveToLh3Url(r[12]),
+        Varian: String(r[6] || 'Pcs'),
+        Is_FlashSale: false,
+        Badge: 'Mitra Resmi',
+        Deskripsi: String(r[14] || ''),
+        ID_Supplier: String(r[1] || ''),
+        Nama_Supplier: String(r[2] || '')
       });
     }
 
