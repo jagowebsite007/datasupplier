@@ -687,6 +687,31 @@
               class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
             />
           </div>
+        </div>
+
+        <!-- Baris 4: Varian (Pisahkan dengan koma) & Checkbox Tampilkan di Produk Terlaris -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+          <div class="md:col-span-2">
+            <label for="formSatuan" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Varian (Pisahkan dengan koma)</label>
+            <input
+              id="formSatuan"
+              type="text"
+              placeholder="Hitam, Putih, Ukuran L"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            />
+          </div>
+          <div class="pb-2">
+            <label for="formIsTerlaris" class="inline-flex items-center gap-2.5 cursor-pointer select-none">
+              <input
+                id="formIsTerlaris"
+                type="checkbox"
+                class="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500 cursor-pointer"
+              />
+              <span class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">Tampilkan di Produk Terlaris</span>
+            </label>
+          </div>
+        </div>
+
         <!-- Baris 5: Foto Produk (URL / Upload / Kamera) — Maksimal 5 Foto -->
         <div class="space-y-3">
           <div class="flex items-center justify-between gap-2">
@@ -891,6 +916,397 @@
   </div>
 
   <!-- =========================================================================
+       MODAL 2: UPDATE HARGA & STOK CEPAT
+       ========================================================================= -->
+  <div id="quickPriceModal" class="panel-hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
+    <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+      <div class="px-6 py-4 bg-gradient-to-r from-teal-700 to-teal-600 text-white flex items-center justify-between">
+        <div>
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-teal-200 block">Quick Update</span>
+          <h3 id="quickModalProductName" class="font-extrabold text-sm sm:text-base truncate max-w-[260px]">Nama Produk</h3>
+        </div>
+        <button type="button" onclick="closeQuickPriceModal()" class="text-teal-100 hover:text-white cursor-pointer">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <input type="hidden" id="quickIdProduk" />
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Harga Modal Supplier (Rp)</label>
+          <input
+            id="quickHargaSupplier"
+            type="number"
+            min="0"
+            step="100"
+            required
+            class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-base font-extrabold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Harga Coret / Asli (Rp)</label>
+          <input
+            id="quickHargaAsli"
+            type="number"
+            min="0"
+            step="100"
+            class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-base font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Harga Jual Diskon (Rp) *</label>
+          <input
+            id="quickHargaJual"
+            type="number"
+            min="0"
+            step="100"
+            required
+            class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-base font-extrabold text-teal-600 dark:text-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Stok Produk *</label>
+          <input
+            id="quickTotalStok"
+            type="number"
+            min="0"
+            step="1"
+            required
+            class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-base font-extrabold text-sky-600 dark:text-sky-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
+          />
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button
+            type="button"
+            onclick="closeQuickPriceModal()"
+            class="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300 cursor-pointer"
+          >
+            Batal
+          </button>
+          <button
+            id="btnQuickSave"
+            type="button"
+            onclick="submitQuickPriceForm()"
+            class="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-extrabold shadow-lg shadow-teal-600/20 flex items-center gap-2 cursor-pointer"
+          >
+            <i class="fa-solid fa-check"></i>
+            <span>Update Sekarang</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL 3: KONFIRMASI HAPUS PRODUK
+       ========================================================================= -->
+  <div id="deleteConfirmModal" class="panel-hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
+    <div class="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 text-center space-y-4">
+      <div class="w-14 h-14 rounded-2xl bg-rose-100 dark:bg-rose-950/70 text-rose-600 flex items-center justify-center mx-auto">
+        <i class="fa-solid fa-trash-can text-2xl"></i>
+      </div>
+      <div>
+        <h3 class="text-base font-extrabold text-slate-900 dark:text-white">Hapus Produk & File Drive?</h3>
+        <p id="deleteConfirmText" class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          Data produk di Spreadsheet beserta file fotonya di Google Drive akan dihapus.
+        </p>
+      </div>
+      <div class="flex items-center justify-center gap-2 pt-2">
+        <button
+          type="button"
+          onclick="closeDeleteConfirmModal()"
+          class="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer"
+        >
+          Batal
+        </button>
+        <button
+          id="btnConfirmDeleteAction"
+          type="button"
+          onclick="executeDeleteProduct()"
+          class="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-extrabold shadow-lg shadow-rose-600/25 cursor-pointer"
+        >
+          Ya, Hapus
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL 4: KELOLA AKUN LOGIN MITRA (KHUSUS ADMIN)
+       ========================================================================= -->
+  <div id="supplierManagerModal" class="panel-hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm overflow-y-auto">
+    <div class="bg-white dark:bg-slate-900 w-full max-w-3xl rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-8">
+      <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <i class="fa-solid fa-users-gear text-amber-400"></i>
+          <h3 class="font-extrabold text-base">Manajemen Akun Login & Sub-Folder Drive Mitra</h3>
+        </div>
+        <button type="button" onclick="closeSupplierManagerModal()" class="text-slate-400 hover:text-white cursor-pointer">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-6 max-h-[82vh] overflow-y-auto">
+        <div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 id="supFormTitle" class="text-xs font-extrabold uppercase tracking-wider text-teal-600 dark:text-teal-400">
+              + Buat Akun & Sub-Folder Mitra Baru
+            </h4>
+            <button type="button" onclick="resetSupplierForm()" class="text-[11px] text-slate-500 hover:text-slate-800 underline cursor-pointer">
+              Reset Form
+            </button>
+          </div>
+          <input type="hidden" id="supFormId" />
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-500 mb-1">Nama Perusahaan / Mitra *</label>
+              <input id="supFormNama" type="text" placeholder="CV Maju Bersama" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-semibold" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-500 mb-1">Username Login *</label>
+              <input id="supFormUsername" type="text" placeholder="mitra3" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-mono" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-500 mb-1">Password / PIN *</label>
+              <input id="supFormPassword" type="text" placeholder="123456" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-mono" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-500 mb-1">No. WhatsApp</label>
+              <input id="supFormWa" type="text" placeholder="0812xxxxxxx" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-500 mb-1">Alamat Singkat</label>
+              <input id="supFormAlamat" type="text" placeholder="Kota / Kawasan" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs" />
+            </div>
+            <div class="flex gap-2">
+              <select id="supFormStatus" class="px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-bold">
+                <option value="Aktif">Aktif</option>
+                <option value="Nonaktif">Nonaktif</option>
+              </select>
+              <button
+                id="btnSaveSupplier"
+                type="button"
+                onclick="submitSupplierAccountForm()"
+                class="flex-1 py-2 px-3 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-extrabold shadow cursor-pointer"
+              >
+                Simpan Akun & Buat Folder
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-500 mb-2.5">Daftar Akun Mitra & Link Sub-Folder Drive</h4>
+          <div id="supplierListContainer" class="space-y-2"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL 5: PENGATURAN & DIAGNOSTIK SINKRONISASI GOOGLE DRIVE + AI KEY
+       ========================================================================= -->
+  <div id="driveSyncConfigModal" class="panel-hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm overflow-y-auto">
+    <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-8">
+      <div class="px-6 py-4 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <i class="fa-brands fa-google-drive text-lg"></i>
+          <h3 class="font-extrabold text-base">Tes & Inisialisasi Google Drive + AI Studio</h3>
+        </div>
+        <button type="button" onclick="closeDriveSyncConfigModal()" class="text-slate-900 hover:text-black cursor-pointer">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-4 max-h-[82vh] overflow-y-auto">
+        <div id="syncDiagnosticBox" class="panel-hidden p-3.5 rounded-2xl text-xs font-semibold border space-y-2">
+          <div id="syncDiagnosticMessage">Memeriksa status koneksi Google Drive...</div>
+          <div id="syncDiagnosticLinks" class="panel-hidden flex flex-wrap gap-2 pt-1">
+            <a id="diagLinkDrive" href="#" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-lg bg-teal-600 text-white font-bold text-[11px] inline-flex items-center gap-1.5">
+              <i class="fa-brands fa-google-drive"></i> Buka Folder Drive Utama
+            </a>
+            <a id="diagLinkSheet" href="#" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-bold text-[11px] inline-flex items-center gap-1.5">
+              <i class="fa-solid fa-table"></i> Buka Google Spreadsheet
+            </a>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">
+            1. URL Web App Google Apps Script (<code class="text-teal-600">/exec</code>) *
+          </label>
+          <input
+            id="configWebAppUrlInput"
+            type="url"
+            placeholder="https://script.google.com/macros/s/.../exec"
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-amber-500"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">
+            2. Link / ID Folder Google Drive Utama (Opsional)
+          </label>
+          <input
+            id="configDriveFolderInput"
+            type="text"
+            placeholder="Kosongkan untuk buat otomatis, atau tempel Link Folder Drive..."
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-amber-500"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">
+            3. Link / ID Google Spreadsheet Utama (Opsional)
+          </label>
+          <input
+            id="configSpreadsheetInput"
+            type="text"
+            placeholder="Kosongkan untuk buat otomatis, atau tempel Link Spreadsheet..."
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-amber-500"
+          />
+        </div>
+
+        <div class="p-3.5 rounded-2xl bg-teal-50/70 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-800/80 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold uppercase tracking-wider text-teal-800 dark:text-teal-300">
+              <i class="fa-solid fa-store mr-1"></i>Integrasi Katalog hibualamo.shop (Skenario B)
+            </span>
+            <span class="px-2 py-0.5 rounded bg-teal-600 text-white text-[9px] font-extrabold">AUTO-SYNC</span>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+              Link / ID Spreadsheet hibualamo.shop (Opsional)
+            </label>
+            <input
+              id="configHibualamoSpreadsheetInput"
+              type="text"
+              placeholder="Kosongkan jika memakai Spreadsheet yang sama dengan di atas..."
+              class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+                Nama Sheet / Tab Katalog
+              </label>
+              <input
+                id="configHibualamoSheetNameInput"
+                type="text"
+                value="Products_Hibualamo"
+                placeholder="Products_Hibualamo"
+                class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-teal-500"
+              />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+                Endpoint JSON Katalog Approved
+              </label>
+              <input
+                id="configHibualamoApiUrlOutput"
+                type="text"
+                readonly
+                onclick="this.select();document.execCommand('copy');showToast('URL Endpoint Katalog hibualamo.shop disalin!');"
+                class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-[10px] font-mono text-teal-700 dark:text-teal-300 cursor-pointer"
+                title="Klik untuk menyalin URL JSON API khusus produk Approved"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 mb-1">
+            4. Gemini API Key untuk Mode 2 AI Studio (Opsional)
+          </label>
+          <input
+            id="configGeminiKeyInput"
+            type="password"
+            placeholder="AIzaSy... (Opsional: Memperkuat analisis bentuk kemasan produk)"
+            class="w-full px-3.5 py-2.5 rounded-xl bg-purple-50/60 dark:bg-slate-800 border border-purple-300 dark:border-purple-800 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-purple-500"
+          />
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+          <button
+            type="button"
+            onclick="closeDriveSyncConfigModal()"
+            class="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300 cursor-pointer"
+          >
+            Tutup
+          </button>
+          <button
+            id="btnSaveDriveConfig"
+            type="button"
+            onclick="submitDriveSyncConfig()"
+            class="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold shadow-lg flex items-center gap-2 cursor-pointer"
+          >
+            <i class="fa-solid fa-bolt"></i>
+            <span>Simpan & Tes Buat Folder Drive Sekarang</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL 6: CONVERTER & TESTER LINK GOOGLE DRIVE -> LH3
+       ========================================================================= -->
+  <div id="lh3TesterModal" class="panel-hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
+    <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+      <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-wand-magic-sparkles text-teal-400"></i>
+          <h3 class="font-extrabold text-sm sm:text-base">Konverter Link Google Drive ke lh3.googleusercontent.com</h3>
+        </div>
+        <button type="button" onclick="closeLh3ConverterTester()" class="text-slate-400 hover:text-white cursor-pointer">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Tempel Link Sharing Google Drive Biasa</label>
+          <input
+            id="testerDriveInput"
+            type="text"
+            oninput="runLh3Tester()"
+            placeholder="https://drive.google.com/file/d/1aBcDeFgHiJkLmNoPqRsTuVwXyZ/view?usp=sharing"
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-teal-600 dark:text-teal-400 mb-1">Hasil Link Direct Image (Anti-Blokir ORB):</label>
+          <div class="flex gap-2">
+            <input
+              id="testerLh3Output"
+              type="text"
+              readonly
+              class="flex-1 px-3.5 py-2.5 rounded-xl bg-teal-50 dark:bg-teal-950/50 border border-teal-300 dark:border-teal-800 text-xs font-mono text-teal-900 dark:text-teal-200"
+            />
+            <button
+              type="button"
+              onclick="copyLh3TesterOutput()"
+              class="px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold cursor-pointer"
+            >
+              <i class="fa-regular fa-copy mr-1"></i>Salin
+            </button>
+          </div>
+        </div>
+        <div class="p-3 rounded-xl bg-slate-900 text-slate-200 text-[11px] font-mono overflow-x-auto">
+          <div class="text-teal-400 font-sans font-bold mb-1">Kode Embed HTML yang Direkomendasikan:</div>
+          <code id="testerHtmlCode">&lt;img src="https://lh3.googleusercontent.com/d/FILE_ID" referrerpolicy="no-referrer" alt="Foto Produk"&gt;</code>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
        MODAL 7: LIGHTBOX PREVIEW GAMBAR (MENDUKUNG GALERI MULTI-FOTO)
        ========================================================================= -->
   <div id="imageLightboxModal" onclick="closeImageLightbox()" class="panel-hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md cursor-zoom-out">
@@ -1086,6 +1502,39 @@
           return;
         }
       }
+
+      if (onError) {
+        onError(new Error('URL Web App Google Apps Script belum dikonfigurasi.'));
+      }
+    }
+
+    function showBlockElement(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('panel-hidden');
+    }
+
+    function hideElement(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('panel-hidden');
+    }
+
+    function extractDriveFileIdClient(inputUrlOrId) {
+      if (!inputUrlOrId) return '';
+      const raw = String(inputUrlOrId).trim();
+      const patterns = [
+        /lh3\.googleusercontent\.com\/d\/([a-zA-Z0-9_-]{10,})/,
+        /\/file\/d\/([a-zA-Z0-9_-]{10,})/,
+        /[?&]id=([a-zA-Z0-9_-]{10,})/
+      ];
+      for (let i = 0; i < patterns.length; i++) {
+        const match = raw.match(patterns[i]);
+        if (match && match[1]) return match[1];
+      }
+      if (/^[a-zA-Z0-9_-]{20,60}$/.test(raw)) {
+        return raw;
+      }
+      return '';
+    }
 
     function convertSingleDriveToLh3Client(singleUrlOrId) {
       if (!singleUrlOrId) return '';
@@ -2105,10 +2554,50 @@
     function buildProductTableRowHtml(p, isAdmin) {
       const photoUrls = parsePhotoUrlsClient(p.foto_url);
       const safePhotoUrl = photoUrls[0] || 'https://placehold.co/120x120/0f766e/ffffff?text=Foto';
+      const photoCount = photoUrls.length;
       const hargaModal = Number(p.harga_supplier || 0);
       const hargaJual = Number(p.harga_jual_supplier || 0);
       const marginRp = hargaJual - hargaModal;
       const isApproved = String(p.status_approval || 'Pending').toLowerCase() === 'approved';
+
+      return (
+        '<tr class="hover:bg-slate-50/90 dark:hover:bg-slate-800/40 transition">' +
+          '<td class="py-3 px-4">' +
+            '<div class="flex items-center gap-3">' +
+              '<div class="relative w-11 h-11 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shrink-0">' +
+                '<img src="' + escapeHtml(safePhotoUrl) + '" referrerpolicy="no-referrer" onclick="openImageLightbox(\'' + escapeJs(p.id_produk) + '\')" onerror="this.onerror=null;this.src=\'https://placehold.co/120x120/334155/ffffff?text=Foto\';" class="w-full h-full object-cover cursor-zoom-in" />' +
+                (photoCount > 1
+                  ? '<span class="absolute bottom-0.5 right-0.5 px-1 py-0.2 rounded bg-slate-900/80 text-white text-[8px] font-extrabold">' + photoCount + '</span>'
+                  : '') +
+              '</div>' +
+              '<div class="min-w-0">' +
+                '<div class="font-bold text-slate-900 dark:text-white truncate max-w-[200px]">' + escapeHtml(p.nama_produk) + '</div>' +
+                '<div class="text-[11px] text-slate-400 font-mono">SKU: ' + escapeHtml(p.kode_sku || '-') + (isAdmin ? ' • ' + escapeHtml(p.nama_supplier || 'Tanpa Supplier') : '') + '</div>' +
+                '<div class="mt-1">' + getApprovalBadgeHtml(p.status_approval, p.hibualamo_url) + '</div>' +
+              '</div>' +
+            '</div>' +
+          '</td>' +
+          '<td class="py-3 px-3"><span class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-xs font-semibold">' + escapeHtml(p.kategori || 'Elektronik') + '</span></td>' +
+          '<td class="py-3 px-3 font-extrabold text-slate-800 dark:text-slate-200">' + formatRupiah(hargaModal) + '<div class="mt-0.5">' + getPriceTrendBadge(hargaModal, p.harga_supplier_lama) + '</div></td>' +
+          '<td class="py-3 px-3 font-extrabold text-teal-600 dark:text-teal-400">' + formatRupiah(hargaJual) + '</td>' +
+          '<td class="py-3 px-3"><span class="text-xs font-bold text-emerald-600 dark:text-emerald-400">' + formatRupiah(marginRp) + '</span></td>' +
+          '<td class="py-3 px-3">' + getStockBadgeHtml(p.total_stok, p.satuan) + '</td>' +
+          '<td class="py-3 px-3 text-[11px] text-slate-400">' + escapeHtml(p.updated_at || '-') + '</td>' +
+          '<td class="py-3 px-4 text-right whitespace-nowrap">' +
+            (isAdmin && !isApproved
+              ? '<button type="button" onclick="handleApprovalDecision(\'' + escapeJs(p.id_produk) + '\', \'Approved\')" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs mr-1 cursor-pointer" title="Approve ke Hibualamo.shop"><i class="fa-solid fa-check mr-1"></i>Approve</button>'
+              : '') +
+            (isAdmin
+              ? '<button type="button" onclick="downloadProductPhoto(\'' + escapeJs(p.id_produk) + '\')" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold text-xs mr-1 cursor-pointer" title="Unduh Foto Produk"><i class="fa-solid fa-download"></i></button>'
+              : '') +
+            '<button type="button" onclick="openQuickPriceModal(\'' + escapeJs(p.id_produk) + '\')" class="px-2.5 py-1 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 font-bold text-xs mr-1 cursor-pointer">Update</button>' +
+            '<button type="button" onclick="openProductModal(\'' + escapeJs(p.id_produk) + '\')" class="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs mr-1 cursor-pointer"><i class="fa-solid fa-pen"></i></button>' +
+            '<button type="button" onclick="openDeleteConfirmModal(\'' + escapeJs(p.id_produk) + '\')" class="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-600 text-xs cursor-pointer"><i class="fa-solid fa-trash"></i></button>' +
+          '</td>' +
+        '</tr>'
+      );
+    }
+
     function downloadProductPhoto(idProduk, specificPhotoUrl) {
       if (!currentUser || String(currentUser.role || '').toLowerCase() !== 'admin') {
         showToast('Fitur unduh foto hanya tersedia untuk Admin.', 'warning');
@@ -2776,20 +3265,6 @@
         badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700';
       } else {
         badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300';
-      }
-    }
-
-    function handleDirectUrlInput() {
-      const raw = document.getElementById('formFotoUrl').value;
-      const converted = convertDriveToLh3Client(raw);
-      const previewBox = document.getElementById('photoPreviewBox');
-      const previewEl = document.getElementById('formImagePreview');
-      if (converted) {
-        document.getElementById('formFotoUrl').value = converted;
-        if (previewBox) previewBox.classList.remove('panel-hidden');
-        if (previewEl) previewEl.src = converted;
-      } else if (previewBox && !compressedBase64Image) {
-        previewBox.classList.add('panel-hidden');
       }
     }
 
