@@ -117,6 +117,9 @@ function doPost(e) {
       case 'deleteProductData':
         result = deleteProductData(args[0], args[1]);
         break;
+      case 'clearDummyProducts':
+        result = clearDummyProducts(args[0]);
+        break;
       case 'saveSupplierAccount':
         result = saveSupplierAccount(args[0], args[1]);
         break;
@@ -632,26 +635,36 @@ function getPortalData(sessionUser) {
       const statusApproval = rawApproval || 'Pending';
       const approvedAt = formatCellDate_(r[17]);
 
+      const hargaJualDiskon = Number(r[8] || 0);
+      const hargaAsliCoret = Number(r[18] || r[10] || hargaJualDiskon);
+      const subKategoriVal = String(r[19] || '');
+      const isTerlarisVal = String(r[20] || '').toUpperCase() === 'TRUE' || r[20] === true;
+
       products.push({
         id_produk: String(r[0] || ''),
         id_supplier: rowSupplierId,
         nama_supplier: String(r[2] || ''),
         kode_sku: String(r[3] || ''),
         nama_produk: String(r[4] || ''),
-        kategori: String(r[5] || 'Umum'),
-        satuan: String(r[6] || 'Pcs'),
+        kategori: String(r[5] || 'Elektronik'),
+        sub_kategori: subKategoriVal,
+        satuan: String(r[6] || ''),
+        varian: String(r[6] || ''),
         harga_supplier: Number(r[7] || 0),
-        harga_jual_supplier: Number(r[8] || 0),
+        harga_jual_supplier: hargaJualDiskon,
+        harga_asli: hargaAsliCoret,
         harga_supplier_lama: Number(r[9] || 0),
-        harga_jual_lama: Number(r[10] || 0),
+        harga_jual_lama: hargaAsliCoret,
         total_stok: parsedStock,
         foto_url: normalizedPhoto,
         drive_file_id: extractedFileId,
         download_url: directDownloadUrl,
         catatan: String(r[14] || ''),
+        deskripsi: String(r[14] || ''),
         updated_at: formatCellDate_(r[15]),
         status_approval: statusApproval,
         approved_at: approvedAt,
+        is_terlaris: isTerlarisVal,
         hibualamo_url: 'https://hibualamo.shop/?sku=' + encodeURIComponent(String(r[3] || r[0] || ''))
       });
     }
@@ -835,8 +848,17 @@ function saveProductData(payload, sessionUser) {
     const isAdmin = String(sessionUser.role || '').toLowerCase() === 'admin';
     const now = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
 
-    const targetSupplierId = (isAdmin && payload.id_supplier) ? payload.id_supplier : sessionUser.id_supplier;
-    const targetSupplierName = (isAdmin && payload.nama_supplier) ? payload.nama_supplier : sessionUser.nama_supplier;
+    let targetSupplierId = sessionUser.id_supplier;
+    let targetSupplierName = sessionUser.nama_supplier;
+    if (isAdmin) {
+      if (payload.id_supplier === 'TANPA_SUPPLIER' || payload.id_supplier === '') {
+        targetSupplierId = '';
+        targetSupplierName = 'Tanpa Supplier';
+      } else if (payload.id_supplier) {
+        targetSupplierId = payload.id_supplier;
+        targetSupplierName = payload.nama_supplier || 'Mitra';
+      }
+    }
 
     let fotoUrl = convertDriveToLh3Url(payload.foto_url || '');
     let driveFileId = extractDriveFileId_(fotoUrl);
@@ -852,8 +874,8 @@ function saveProductData(payload, sessionUser) {
         payload.base64_image,
         smartFileName,
         payload.mime_type || 'image/jpeg',
-        targetSupplierId,
-        targetSupplierName
+        targetSupplierId || 'ADMIN',
+        targetSupplierName || 'Umum'
       );
       fotoUrl = uploaded.lh3Url;
       driveFileId = uploaded.fileId;
@@ -862,7 +884,12 @@ function saveProductData(payload, sessionUser) {
 
     const hargaSupplierBaru = Number(payload.harga_supplier || 0);
     const hargaJualBaru = Number(payload.harga_jual_supplier || 0);
-    const totalStokBaru = Number(payload.total_stok !== undefined ? payload.total_stok : 0);
+    const hargaAsliBaru = Number(payload.harga_asli || hargaJualBaru);
+    const totalStokBaru = Number(payload.total_stok !== undefined ? payload.total_stok : 50);
+    const subKategoriBaru = String(payload.sub_kategori || '').trim();
+    const isTerlarisBaru = Boolean(payload.is_terlaris);
+    const varianBaru = String(payload.varian || payload.satuan || '').trim();
+    const deskripsiBaru = String(payload.deskripsi !== undefined ? payload.deskripsi : (payload.catatan || '')).trim();
 
     if (payload.id_produk) {
       for (let i = 1; i < data.length; i++) {
@@ -884,21 +911,13 @@ function saveProductData(payload, sessionUser) {
           }
 
           const hargaSupplierLamaSaatIni = Number(row[7] || 0);
-          const hargaJualLamaSaatIni = Number(row[8] || 0);
-
           const historyHargaSupplier = (hargaSupplierBaru !== hargaSupplierLamaSaatIni)
             ? hargaSupplierLamaSaatIni
             : Number(row[9] || hargaSupplierLamaSaatIni);
 
-          const historyHargaJual = (hargaJualBaru !== hargaJualLamaSaatIni)
-            ? hargaJualLamaSaatIni
-            : Number(row[10] || hargaJualLamaSaatIni);
-
           const finalFotoUrl = fotoUrl || oldPhotoUrlInSheet;
           const finalDownloadUrl = driveDownloadCell || String(row[13] || '');
 
-          // Jika Mitra yang mengubah produk, status kembali menjadi Pending menunggu Approval Admin.
-          // Jika Admin yang menyimpan, pertahankan status_approval atau set sesuai payload.
           const currentApproval = String(row[16] || 'Pending').trim();
           const nextApprovalStatus = isAdmin
             ? String(payload.status_approval || currentApproval || 'Approved')
@@ -907,30 +926,35 @@ function saveProductData(payload, sessionUser) {
             ? (formatCellDate_(row[17]) || now)
             : '';
 
+          const updatedSupplierId = isAdmin ? targetSupplierId : String(row[1]);
+          const updatedSupplierName = isAdmin ? targetSupplierName : String(row[2]);
+
           const updatedRow = [
             String(row[0]),
-            String(row[1]),
-            String(row[2]),
+            updatedSupplierId,
+            updatedSupplierName,
             String(payload.kode_sku || row[3] || ''),
             String(payload.nama_produk || row[4]),
-            String(payload.kategori || row[5] || 'Umum'),
-            String(payload.satuan || row[6] || 'Pcs'),
+            String(payload.kategori || row[5] || 'Elektronik'),
+            varianBaru,
             hargaSupplierBaru,
             hargaJualBaru,
             historyHargaSupplier,
-            historyHargaJual,
+            hargaAsliBaru,
             totalStokBaru,
             finalFotoUrl,
             finalDownloadUrl,
-            String(payload.catatan !== undefined ? payload.catatan : row[14]),
+            deskripsiBaru,
             now,
             nextApprovalStatus,
-            nextApprovedAt
+            nextApprovedAt,
+            hargaAsliBaru,
+            subKategoriBaru,
+            isTerlarisBaru
           ];
 
           sheet.getRange(i + 1, 1, 1, updatedRow.length).setValues([updatedRow]);
 
-          // Sinkronkan ke Spreadsheet hibualamo.shop sesuai status approval
           try {
             syncProductRowToHibualamoSheet_(updatedRow);
           } catch (syncErr) {
@@ -940,7 +964,7 @@ function saveProductData(payload, sessionUser) {
           return {
             success: true,
             message: isAdmin
-              ? 'Data produk & file di Sub-Folder Google Drive berhasil disinkronkan!'
+              ? 'Data produk berhasil diperbarui & disinkronkan ke Database Hibualamo.shop!'
               : 'Perubahan produk disimpan & menunggu Approval Admin hibualamo.shop!',
             foto_url: finalFotoUrl,
             download_url: finalDownloadUrl,
@@ -952,7 +976,7 @@ function saveProductData(payload, sessionUser) {
     } else {
       const newProductId = 'PRD-' + Date.now().toString().slice(-6);
       let createdSubFolderUrl = '';
-      if (typeof getOrCreateSupplierSubFolder_ === 'function') {
+      if (targetSupplierId && typeof getOrCreateSupplierSubFolder_ === 'function') {
         const supFolder = getOrCreateSupplierSubFolder_(targetSupplierId, targetSupplierName);
         createdSubFolderUrl = supFolder.getUrl();
         updateSupplierFolderUrlInSheet_(targetSupplierId, createdSubFolderUrl);
@@ -972,19 +996,22 @@ function saveProductData(payload, sessionUser) {
         targetSupplierName,
         String(payload.kode_sku || ('SKU-' + newProductId.slice(-4))),
         String(payload.nama_produk || 'Produk Baru'),
-        String(payload.kategori || 'Umum'),
-        String(payload.satuan || 'Pcs'),
+        String(payload.kategori || 'Elektronik'),
+        varianBaru,
         hargaSupplierBaru,
         hargaJualBaru,
         hargaSupplierBaru,
-        hargaJualBaru,
+        hargaAsliBaru,
         totalStokBaru,
         fotoUrl,
         driveDownloadCell || fotoUrl,
-        String(payload.catatan || ''),
+        deskripsiBaru,
         now,
         initialApproval,
-        initialApprovedAt
+        initialApprovedAt,
+        hargaAsliBaru,
+        subKategoriBaru,
+        isTerlarisBaru
       ];
 
       sheet.appendRow(newRow);
@@ -1000,7 +1027,7 @@ function saveProductData(payload, sessionUser) {
       return {
         success: true,
         message: isAdmin
-          ? 'Produk baru berhasil disimpan & langsung tayang di hibualamo.shop!'
+          ? 'Produk baru berhasil disimpan & langsung tersinkron ke Products_Hibualamo!'
           : 'Produk baru berhasil disimpan & menunggu Approval Admin hibualamo.shop!',
         foto_url: fotoUrl,
         download_url: driveDownloadCell || fotoUrl,
@@ -1106,13 +1133,13 @@ function syncProductRowToHibualamoSheet_(productRow) {
   const statusApproval = String(productRow[16] || 'Pending').trim();
 
   const hargaSupplier = Number(productRow[7] || 0);
-  const hargaJual = Number(productRow[8] || 0);
-  const hargaJualLama = Number(productRow[10] || 0);
+  const hargaJualDiskon = Number(productRow[8] || 0);
+  const hargaAsliInput = Number(productRow[18] || productRow[10] || 0);
+  const hargaAsliFinal = hargaAsliInput > 0 ? hargaAsliInput : hargaJualDiskon;
 
-  // Jika harga jual turun dibanding harga jual lama, tampilkan harga lama sebagai Harga_Asli (coret)
-  // dan harga jual baru sebagai Harga_Diskon
-  const hargaAsliDefault = (hargaJualLama > hargaJual) ? hargaJualLama : hargaJual;
-  const hargaDiskonDefault = hargaJual;
+  const isTerlarisFlag =
+    productRow[20] === true ||
+    String(productRow[20] || '').toUpperCase() === 'TRUE';
 
   let foundIndex = -1;
   let existingRow = null;
@@ -1124,29 +1151,32 @@ function syncProductRowToHibualamoSheet_(productRow) {
     }
   }
 
-  // Pertahankan nilai Terjual, Rating, Is_FlashSale, dan Badge jika produk sudah ada di sheet hibualamo.shop
   const terjualVal = (existingRow && existingRow[7] !== '' && existingRow[7] !== undefined) ? existingRow[7] : 0;
   const ratingVal = (existingRow && existingRow[8] !== '' && existingRow[8] !== undefined) ? existingRow[8] : 5.0;
-  const varianVal = String(productRow[6] || (existingRow && existingRow[10]) || 'Pcs');
-  const isFlashSaleVal = (existingRow && existingRow[11] !== '' && existingRow[11] !== undefined) ? existingRow[11] : false;
-  const badgeVal = (existingRow && existingRow[12] !== '' && existingRow[12] !== undefined) ? existingRow[12] : 'Mitra Resmi';
-  const deskripsiVal = String(productRow[14] || (existingRow && existingRow[13]) || '');
+  const varianVal = String(productRow[6] !== undefined ? productRow[6] : ((existingRow && existingRow[10]) || ''));
+  const isFlashSaleVal = productRow[20] !== undefined
+    ? isTerlarisFlag
+    : Boolean(existingRow && existingRow[11]);
+  const badgeVal = isFlashSaleVal
+    ? 'Terlaris'
+    : ((existingRow && existingRow[12] && existingRow[12] !== 'Terlaris') ? existingRow[12] : 'Mitra Resmi');
+  const deskripsiVal = String(productRow[14] !== undefined ? productRow[14] : ((existingRow && existingRow[13]) || ''));
 
   const catalogRow = [
     idProduk,                                // 1. ID_Produk
     String(productRow[4] || ''),             // 2. Nama
-    String(productRow[5] || 'Umum'),         // 3. Kategori
+    String(productRow[5] || 'Elektronik'),   // 3. Kategori
     hargaSupplier,                           // 4. Harga_Supplier
-    hargaAsliDefault,                        // 5. Harga_Asli
-    hargaDiskonDefault,                      // 6. Harga_Diskon
+    hargaAsliFinal,                          // 5. Harga_Asli (Harga Coret / Asli)
+    hargaJualDiskon,                         // 6. Harga_Diskon (Harga Jual Diskon)
     Number(productRow[11] || 0),             // 7. Stok
     terjualVal,                              // 8. Terjual
     ratingVal,                               // 9. Rating
     convertDriveToLh3Url(productRow[12]),    // 10. URL_Gambar (lh3.googleusercontent.com)
-    varianVal,                               // 11. Varian (Satuan)
-    isFlashSaleVal,                          // 12. Is_FlashSale
+    varianVal,                               // 11. Varian (Pisahkan dengan koma)
+    isFlashSaleVal,                          // 12. Is_FlashSale (Tampilkan di Produk Terlaris)
     badgeVal,                                // 13. Badge
-    deskripsiVal,                            // 14. Deskripsi (Catatan)
+    deskripsiVal,                            // 14. Deskripsi
     String(productRow[1] || ''),             // 15. ID_Supplier
     String(productRow[2] || '')              // 16. Nama_Supplier
   ];
@@ -1158,7 +1188,6 @@ function syncProductRowToHibualamoSheet_(productRow) {
       sheet.appendRow(catalogRow);
     }
   } else {
-    // Jika status berubah menjadi Pending atau Rejected, hapus dari katalog tayang hibualamo.shop
     if (foundIndex !== -1) {
       sheet.deleteRow(foundIndex);
     }
@@ -1285,24 +1314,25 @@ function getHibualamoApprovedCatalog_() {
       if (statusApproval.toLowerCase() !== 'approved') continue;
 
       const hargaSupplier = Number(r[7] || 0);
-      const hargaJual = Number(r[8] || 0);
-      const hargaJualLama = Number(r[10] || 0);
-      const hargaAsli = (hargaJualLama > hargaJual) ? hargaJualLama : hargaJual;
+      const hargaJualDiskon = Number(r[8] || 0);
+      const hargaAsliInput = Number(r[18] || r[10] || 0);
+      const hargaAsli = hargaAsliInput > 0 ? hargaAsliInput : hargaJualDiskon;
+      const isTerlaris = r[20] === true || String(r[20] || '').toUpperCase() === 'TRUE';
 
       items.push({
         ID_Produk: String(r[0] || ''),
         Nama: String(r[4] || ''),
-        Kategori: String(r[5] || 'Umum'),
+        Kategori: String(r[5] || 'Elektronik'),
         Harga_Supplier: hargaSupplier,
         Harga_Asli: hargaAsli,
-        Harga_Diskon: hargaJual,
+        Harga_Diskon: hargaJualDiskon,
         Stok: Number(r[11] || 0),
         Terjual: 0,
         Rating: 5.0,
         URL_Gambar: convertDriveToLh3Url(r[12]),
-        Varian: String(r[6] || 'Pcs'),
-        Is_FlashSale: false,
-        Badge: 'Mitra Resmi',
+        Varian: String(r[6] || ''),
+        Is_FlashSale: isTerlaris,
+        Badge: isTerlaris ? 'Terlaris' : 'Mitra Resmi',
         Deskripsi: String(r[14] || ''),
         ID_Supplier: String(r[1] || ''),
         Nama_Supplier: String(r[2] || '')
@@ -1320,6 +1350,59 @@ function getHibualamoApprovedCatalog_() {
       success: false,
       message: err.message
     };
+  }
+}
+
+/**
+ * 6B. Bersihkan Produk Contoh (Dummy) dari Sheet Products & Products_Hibualamo
+ */
+function clearDummyProducts(sessionUser) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+
+  try {
+    if (!sessionUser || !sessionUser.id_supplier) {
+      throw new Error('Silakan login terlebih dahulu.');
+    }
+
+    const db = ensureDatabaseReady_();
+    const sheet = db.sheetProducts;
+    const data = sheet.getDataRange().getValues();
+    const isAdmin = String(sessionUser.role || '').toLowerCase() === 'admin';
+    const dummyIds = ['PRD-1001', 'PRD-1002', 'PRD-1003'];
+    let removedCount = 0;
+
+    for (let i = data.length - 1; i >= 1; i--) {
+      const idProd = String(data[i][0] || '');
+      const rowSupId = String(data[i][1] || '');
+      const photoUrl = String(data[i][12] || '');
+      const isDummyRow = dummyIds.indexOf(idProd) !== -1 || photoUrl.indexOf('placehold.co') !== -1;
+
+      if (isDummyRow && (isAdmin || rowSupId === String(sessionUser.id_supplier))) {
+        try {
+          const fakeDeleted = data[i].slice();
+          fakeDeleted[16] = 'Deleted';
+          syncProductRowToHibualamoSheet_(fakeDeleted);
+        } catch (e) {}
+        sheet.deleteRow(i + 1);
+        removedCount++;
+      }
+    }
+
+    return {
+      success: true,
+      removedCount: removedCount,
+      message: removedCount > 0
+        ? (removedCount + ' produk contoh (dummy) berhasil dibersihkan dari database!')
+        : 'Tidak ada produk contoh (dummy) yang ditemukan.'
+    };
+  } catch (err) {
+    return {
+      success: false,
+      message: 'Gagal membersihkan produk contoh: ' + err.message
+    };
+  } finally {
+    lock.releaseLock();
   }
 }
 
