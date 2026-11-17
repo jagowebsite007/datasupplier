@@ -687,34 +687,14 @@
               class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
             />
           </div>
-        </div>
-
-        <!-- Baris 4: Varian (Pisahkan dengan koma) & Checkbox Tampilkan di Produk Terlaris -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-          <div class="md:col-span-2">
-            <label for="formSatuan" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Varian (Pisahkan dengan koma)</label>
-            <input
-              id="formSatuan"
-              type="text"
-              placeholder="Hitam, Putih, Ukuran L"
-              class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-            />
-          </div>
-          <div class="pb-2.5 flex items-center">
-            <label for="formIsTerlaris" class="inline-flex items-center gap-2.5 cursor-pointer select-none">
-              <input
-                id="formIsTerlaris"
-                type="checkbox"
-                class="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500 cursor-pointer"
-              />
-              <span class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">Tampilkan di Produk Terlaris</span>
-            </label>
-          </div>
-        </div>
-
-        <!-- Baris 5: Foto Produk (URL / Upload / Kamera) -->
+        <!-- Baris 5: Foto Produk (URL / Upload / Kamera) — Maksimal 5 Foto -->
         <div class="space-y-3">
-          <label for="formFotoUrl" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Foto Produk (URL / Upload / Kamera)</label>
+          <div class="flex items-center justify-between gap-2">
+            <label for="formFotoUrl" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Foto Produk (URL / Upload / Kamera) <span class="text-slate-400 font-normal">(Maks. 5 Foto)</span></label>
+            <span id="photoCountBadge" class="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+              0 / 5 Foto
+            </span>
+          </div>
 
           <input
             id="formFileInput"
@@ -729,6 +709,7 @@
             id="formGalleryInput"
             type="file"
             accept="image/*"
+            multiple
             onchange="handleImageFileSelected(event)"
             class="panel-hidden"
           />
@@ -738,7 +719,7 @@
               id="formFotoUrl"
               type="text"
               oninput="handleDirectUrlInput()"
-              placeholder="Tempel URL gambar atau gunakan tombol Upload / Kamera..."
+              placeholder="Tempel URL gambar (pisahkan koma untuk maks. 5 foto) atau gunakan Upload / Kamera..."
               class="flex-1 px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
             />
 
@@ -766,7 +747,7 @@
             <div class="flex items-center justify-between">
               <span class="text-[11px] font-bold text-teal-300 flex items-center gap-1.5">
                 <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
-                Kamera Aktif — Arahkan ke Produk
+                Kamera Aktif — Arahkan ke Produk (Maks. 5 Foto)
               </span>
               <div class="flex items-center gap-1.5">
                 <button
@@ -798,57 +779,76 @@
               class="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg cursor-pointer"
             >
               <i class="fa-solid fa-wand-magic-sparkles"></i>
-              <span>Jepret & Generate AI Studio (Mode 2)</span>
+              <span>Jepret & Tambah ke Daftar Foto (AI Studio Mode 2)</span>
             </button>
           </div>
 
-          <!-- Box Preview & AI Studio (Tampil saat ada foto / proses AI) -->
-          <div id="photoPreviewBox" class="panel-hidden p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 flex flex-col sm:flex-row items-center gap-3">
-            <div class="relative w-20 h-20 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 overflow-hidden flex items-center justify-center shrink-0">
-              <img
-                id="formImagePreview"
-                src="https://placehold.co/200x200/0f766e/ffffff?text=Preview"
-                referrerpolicy="no-referrer"
-                alt="Preview Produk"
-                class="w-full h-full object-cover"
-              />
-              <div id="aiGeneratingOverlay" class="panel-hidden absolute inset-0 bg-slate-950/80 backdrop-blur-[2px] flex flex-col items-center justify-center text-white p-1.5 text-center">
-                <i class="fa-solid fa-wand-magic-sparkles fa-spin text-purple-400 text-base mb-1"></i>
-                <span id="aiGeneratingStepText" class="text-[8px] font-extrabold leading-tight text-purple-200">AI Studio...</span>
-              </div>
-              <span id="compressionBadge" class="panel-hidden absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-slate-900/80 text-white text-[9px] font-bold"></span>
+          <!-- Box Preview Multi-Foto (Maks. 5 Foto) & AI Studio -->
+          <div id="photoPreviewBox" class="panel-hidden p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 space-y-3">
+            <!-- Deretan Slot Thumbnail Foto (1 s/d 5) -->
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                <i class="fa-regular fa-images mr-1 text-blue-600"></i>Daftar Foto Produk (Klik foto untuk edit / AI Studio, foto pertama menjadi Foto Utama):
+              </span>
             </div>
+            <div id="multiPhotoSlotsContainer" class="flex flex-wrap items-center gap-2.5"></div>
 
-            <div class="flex-1 space-y-1.5 text-center sm:text-left">
-              <div id="aiPhotoSwitchWrap" class="panel-hidden flex flex-wrap items-center justify-center sm:justify-start gap-1.5">
-                <button
-                  id="btnUseAiFullGen"
-                  type="button"
-                  onclick="selectPhotoVariant('fullgen')"
-                  class="px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-purple-600 text-white shadow-sm cursor-pointer transition"
-                >
-                  <i class="fa-solid fa-wand-magic-sparkles mr-0.5"></i>AI Full Generate
-                </button>
-                <button
-                  id="btnRegenerateAiFullGen"
-                  type="button"
-                  onclick="regenerateAiFullPhoto()"
-                  class="px-2.5 py-1 rounded-md text-[10px] font-bold bg-amber-500 text-slate-950 hover:bg-amber-400 shadow-sm cursor-pointer transition"
-                >
-                  <i class="fa-solid fa-rotate mr-0.5"></i>Variasi Baru
-                </button>
-                <button
-                  id="btnUseRawPhoto"
-                  type="button"
-                  onclick="selectPhotoVariant('raw')"
-                  class="px-2.5 py-1 rounded-md text-[10px] font-bold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 cursor-pointer transition"
-                >
-                  Foto Asli
-                </button>
+            <!-- Panel Detail Foto yang Sedang Dipilih -->
+            <div class="pt-2 border-t border-slate-200/80 dark:border-slate-700/70 flex flex-col sm:flex-row items-center gap-3">
+              <div class="relative w-20 h-20 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 overflow-hidden flex items-center justify-center shrink-0">
+                <img
+                  id="formImagePreview"
+                  src="https://placehold.co/200x200/0f766e/ffffff?text=Preview"
+                  referrerpolicy="no-referrer"
+                  alt="Preview Produk"
+                  class="w-full h-full object-cover"
+                />
+                <div id="aiGeneratingOverlay" class="panel-hidden absolute inset-0 bg-slate-950/80 backdrop-blur-[2px] flex flex-col items-center justify-center text-white p-1.5 text-center">
+                  <i class="fa-solid fa-wand-magic-sparkles fa-spin text-purple-400 text-base mb-1"></i>
+                  <span id="aiGeneratingStepText" class="text-[8px] font-extrabold leading-tight text-purple-200">AI Studio...</span>
+                </div>
+                <span id="compressionBadge" class="panel-hidden absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-slate-900/80 text-white text-[9px] font-bold"></span>
               </div>
-              <p id="aiStatusNote" class="text-[11px] text-slate-500 leading-tight">
-                Foto produk siap disimpan & dikonversi ke link anti-blokir <code class="font-mono">lh3.googleusercontent.com</code>.
-              </p>
+
+              <div class="flex-1 space-y-1.5 text-center sm:text-left">
+                <div id="aiPhotoSwitchWrap" class="panel-hidden flex flex-wrap items-center justify-center sm:justify-start gap-1.5">
+                  <button
+                    id="btnUseAiFullGen"
+                    type="button"
+                    onclick="selectPhotoVariant('fullgen')"
+                    class="px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-purple-600 text-white shadow-sm cursor-pointer transition"
+                  >
+                    <i class="fa-solid fa-wand-magic-sparkles mr-0.5"></i>AI Full Generate
+                  </button>
+                  <button
+                    id="btnRegenerateAiFullGen"
+                    type="button"
+                    onclick="regenerateAiFullPhoto()"
+                    class="px-2.5 py-1 rounded-md text-[10px] font-bold bg-amber-500 text-slate-950 hover:bg-amber-400 shadow-sm cursor-pointer transition"
+                  >
+                    <i class="fa-solid fa-rotate mr-0.5"></i>Variasi Baru
+                  </button>
+                  <button
+                    id="btnUseRawPhoto"
+                    type="button"
+                    onclick="selectPhotoVariant('raw')"
+                    class="px-2.5 py-1 rounded-md text-[10px] font-bold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 cursor-pointer transition"
+                  >
+                    Foto Asli
+                  </button>
+                  <button
+                    id="btnSetAsPrimaryPhoto"
+                    type="button"
+                    onclick="setCurrentSlotAsPrimary()"
+                    class="panel-hidden px-2.5 py-1 rounded-md text-[10px] font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-sm cursor-pointer transition"
+                  >
+                    <i class="fa-solid fa-star mr-0.5"></i>Jadikan Foto Utama
+                  </button>
+                </div>
+                <p id="aiStatusNote" class="text-[11px] text-slate-500 leading-tight">
+                  Foto produk siap disimpan & dikonversi ke link anti-blokir <code class="font-mono">lh3.googleusercontent.com</code>.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -891,405 +891,7 @@
   </div>
 
   <!-- =========================================================================
-       MODAL 2: QUICK UPDATE HARGA & TOTAL STOK
-       ========================================================================= -->
-  <div id="quickPriceModal" class="panel-hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
-    <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-      <div class="px-6 py-4 bg-teal-600 text-white flex items-center justify-between">
-        <div>
-          <span class="text-[10px] font-extrabold uppercase tracking-widest text-teal-200 block">Update Cepat Mitra</span>
-          <h3 id="quickModalProductName" class="font-extrabold text-sm sm:text-base truncate max-w-[260px]">Nama Produk</h3>
-        </div>
-        <button type="button" onclick="closeQuickPriceModal()" class="w-8 h-8 rounded-lg text-teal-100 hover:text-white hover:bg-teal-700 flex items-center justify-center cursor-pointer">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-
-      <div class="p-6 space-y-4">
-        <input type="hidden" id="quickIdProduk" />
-
-        <div>
-          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Harga Modal Supplier (Rp)</label>
-          <div class="relative">
-            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">Rp</span>
-            <input
-              id="quickHargaSupplier"
-              type="number"
-              min="0"
-              step="100"
-              class="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-base font-extrabold"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Harga Coret / Asli (Rp)</label>
-          <div class="relative">
-            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">Rp</span>
-            <input
-              id="quickHargaAsli"
-              type="number"
-              min="0"
-              step="100"
-              class="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-base font-extrabold"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-teal-700 dark:text-teal-400 mb-1">Harga Jual Diskon (Rp) *</label>
-          <div class="relative">
-            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-teal-600">Rp</span>
-            <input
-              id="quickHargaJual"
-              type="number"
-              min="0"
-              step="100"
-              class="w-full pl-9 pr-4 py-2.5 rounded-xl bg-teal-50/60 dark:bg-slate-800 border border-teal-400 dark:border-teal-700 text-base font-extrabold text-teal-700 dark:text-teal-300"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Stok Produk *</label>
-          <input
-            id="quickTotalStok"
-            type="number"
-            min="0"
-            step="1"
-            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-base font-extrabold"
-          />
-        </div>
-
-        <div class="pt-2 flex items-center justify-end gap-2">
-          <button type="button" onclick="closeQuickPriceModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300 cursor-pointer">
-            Batal
-          </button>
-          <button id="btnQuickSave" type="button" onclick="submitQuickPriceForm()" class="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-md flex items-center gap-2 cursor-pointer">
-            <i class="fa-solid fa-check"></i>
-            <span>Update Sekarang</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- =========================================================================
-       MODAL 3: KONFIRMASI HAPUS PRODUK + HAPUS FOTO DI GOOGLE DRIVE
-       ========================================================================= -->
-  <div id="deleteConfirmModal" class="panel-hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
-    <div class="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 text-center">
-      <div class="w-14 h-14 rounded-2xl bg-rose-100 dark:bg-rose-950/70 text-rose-600 flex items-center justify-center mx-auto mb-3">
-        <i class="fa-solid fa-trash-can text-xl"></i>
-      </div>
-      <h3 class="font-extrabold text-base text-slate-900 dark:text-white">Hapus Produk & File Drive?</h3>
-      <p id="deleteConfirmText" class="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-5">
-        Data produk di Spreadsheet beserta file fotonya di Google Drive akan dipindahkan ke Sampah secara otomatis.
-      </p>
-      <div class="flex items-center justify-center gap-2.5">
-        <button type="button" onclick="closeDeleteConfirmModal()" class="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300 cursor-pointer">
-          Batal
-        </button>
-        <button id="btnConfirmDeleteAction" type="button" onclick="executeDeleteProduct()" class="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md cursor-pointer">
-          Ya, Hapus
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- =========================================================================
-       MODAL 4: KELOLA AKUN MITRA & SUB-FOLDER DRIVE (KHUSUS ADMIN)
-       ========================================================================= -->
-  <div id="supplierManagerModal" class="panel-hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm overflow-y-auto">
-    <div class="bg-white dark:bg-slate-900 w-full max-w-4xl rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-8">
-      <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
-        <div class="flex items-center gap-2.5">
-          <i class="fa-solid fa-users-gear text-amber-400 text-lg"></i>
-          <div>
-            <h3 class="font-extrabold text-base">Manajemen Akun Login & Sub-Folder Drive Mitra</h3>
-            <p class="text-[11px] text-slate-400">Setiap Mitra otomatis dibuatkan Sub-Folder khusus di Google Drive</p>
-          </div>
-        </div>
-        <button type="button" onclick="closeSupplierManagerModal()" class="w-8 h-8 rounded-lg text-slate-400 hover:text-white flex items-center justify-center cursor-pointer">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
-      </div>
-
-      <div class="p-6 grid grid-cols-1 lg:grid-cols-5 gap-6 max-h-[80vh] overflow-y-auto">
-        <div class="lg:col-span-2 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
-          <h4 id="supFormTitle" class="font-extrabold text-xs uppercase tracking-wider text-teal-700 dark:text-teal-400">
-            + Buat Akun & Sub-Folder Mitra Baru
-          </h4>
-          <input type="hidden" id="supFormId" />
-
-          <div>
-            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Nama Perusahaan / Toko Mitra *</label>
-            <input id="supFormNama" type="text" placeholder="CV Maju Bersama" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-semibold" />
-          </div>
-
-          <div class="grid grid-cols-2 gap-2.5">
-            <div>
-              <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Username Login *</label>
-              <input id="supFormUsername" type="text" placeholder="mitra3" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-mono" />
-            </div>
-            <div>
-              <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Password *</label>
-              <input id="supFormPassword" type="text" placeholder="123456" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-mono" />
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">No. WhatsApp</label>
-            <input id="supFormWa" type="text" placeholder="0812xxxxxxx" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs" />
-          </div>
-
-          <div>
-            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Alamat</label>
-            <input id="supFormAlamat" type="text" placeholder="Kota / Alamat Gudang" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs" />
-          </div>
-
-          <div>
-            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Status Akses</label>
-            <select id="supFormStatus" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-bold">
-              <option value="Aktif">Aktif (Bisa Login)</option>
-              <option value="Nonaktif">Nonaktif (Diblokir)</option>
-            </select>
-          </div>
-
-          <div class="pt-2 flex items-center gap-2">
-            <button type="button" onclick="resetSupplierForm()" class="px-3 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-xs font-bold cursor-pointer">
-              Reset
-            </button>
-            <button id="btnSaveSupplier" type="button" onclick="submitSupplierAccountForm()" class="flex-1 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-md cursor-pointer">
-              Simpan Akun & Buat Folder
-            </button>
-          </div>
-        </div>
-
-        <div class="lg:col-span-3 space-y-2.5">
-          <h4 class="font-extrabold text-xs uppercase tracking-wider text-slate-500">Daftar Akun Mitra Terdaftar & Link Sub-Folder Drive</h4>
-          <div id="supplierListContainer" class="space-y-2 max-h-96 overflow-y-auto pr-1"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- =========================================================================
-       MODAL 5: TESTER KONVERSI LINK GOOGLE DRIVE KE LH3.GOOGLEUSERCONTENT.COM
-       ========================================================================= -->
-  <div id="lh3TesterModal" class="panel-hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
-    <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-      <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <i class="fa-brands fa-google-drive text-teal-400"></i>
-          <h3 class="font-extrabold text-sm">Konverter Link Google Drive Anti-Blokir</h3>
-        </div>
-        <button type="button" onclick="closeLh3ConverterTester()" class="text-slate-400 hover:text-white cursor-pointer">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-      <div class="p-6 space-y-4">
-        <div>
-          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Tempel Link Sharing Google Drive Biasa:</label>
-          <input
-            id="testerDriveInput"
-            type="text"
-            oninput="runLh3Tester()"
-            placeholder="https://drive.google.com/file/d/1aBcDeFgHiJkLmNoPqRsTuVwXyZ/view?usp=sharing"
-            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono"
-          />
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-teal-700 dark:text-teal-400 mb-1">Hasil Konversi (lh3.googleusercontent.com):</label>
-          <div class="flex gap-2">
-            <input
-              id="testerLh3Output"
-              type="text"
-              readonly
-              class="w-full px-3.5 py-2.5 rounded-xl bg-teal-50 dark:bg-teal-950/40 border border-teal-300 dark:border-teal-800 text-xs font-mono text-teal-800 dark:text-teal-300"
-            />
-            <button type="button" onclick="copyLh3TesterOutput()" class="px-3.5 py-2 rounded-xl bg-teal-600 text-white text-xs font-bold shrink-0 cursor-pointer">
-              Salin
-            </button>
-          </div>
-        </div>
-        <div class="p-3 rounded-xl bg-slate-900 text-slate-200 text-[11px] font-mono overflow-x-auto">
-          <div class="text-slate-400 mb-1">// Kode HTML yang diterapkan di aplikasi ini:</div>
-          <div id="testerHtmlCode">&lt;img src="https://lh3.googleusercontent.com/d/FILE_ID" referrerpolicy="no-referrer" alt="Foto Produk"&gt;</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- =========================================================================
-       MODAL 6: PENGATURAN SINKRONISASI GOOGLE DRIVE, WEB APP URL & GEMINI AI
-       ========================================================================= -->
-  <div id="driveSyncConfigModal" class="panel-hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm overflow-y-auto">
-    <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-8">
-      <div class="px-6 py-4 bg-gradient-to-r from-teal-800 to-slate-900 text-white flex items-center justify-between">
-        <div class="flex items-center gap-2.5">
-          <i class="fa-brands fa-google-drive text-teal-300 text-lg"></i>
-          <div>
-            <h3 class="font-extrabold text-sm sm:text-base">Pengaturan & Tes Koneksi Google Drive</h3>
-            <p class="text-[11px] text-teal-200">Pastikan Web App terhubung ke Google Drive, Spreadsheet & AI Studio Anda</p>
-          </div>
-        </div>
-        <button type="button" onclick="closeDriveSyncConfigModal()" class="text-slate-300 hover:text-white cursor-pointer">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
-      </div>
-
-      <div class="p-6 space-y-4 max-h-[82vh] overflow-y-auto">
-        <!-- Kotak Hasil Tes Diagnostik -->
-        <div id="syncDiagnosticBox" class="panel-hidden p-3.5 rounded-2xl text-xs font-semibold border space-y-2">
-          <div id="syncDiagnosticMessage" class="leading-relaxed"></div>
-          <div id="syncDiagnosticLinks" class="panel-hidden pt-1 flex flex-wrap gap-2">
-            <a id="diagLinkDrive" href="#" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-lg bg-teal-600 text-white font-bold text-[11px] inline-flex items-center gap-1.5">
-              <i class="fa-brands fa-google-drive"></i> Buka Folder Drive
-            </a>
-            <a id="diagLinkSheet" href="#" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-bold text-[11px] inline-flex items-center gap-1.5">
-              <i class="fa-solid fa-table"></i> Buka Spreadsheet
-            </a>
-          </div>
-        </div>
-
-        <!-- Bagian 1: URL Web App Google Apps Script (/exec) -->
-        <div class="p-3.5 rounded-2xl bg-amber-50/90 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800 space-y-2">
-          <label class="block text-xs font-extrabold text-amber-900 dark:text-amber-300">
-            1. URL Web App Google Apps Script (<code class="font-mono">/exec</code>)
-          </label>
-          <input
-            id="configWebAppUrlInput"
-            type="text"
-            placeholder="https://script.google.com/macros/s/AKfycb.../exec"
-            class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-700 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-amber-500"
-          />
-          <p class="text-[11px] text-amber-800 dark:text-amber-300/90 leading-relaxed">
-            URL <code class="font-mono">/exec</code> Anda sudah tertanam secara otomatis di kode Vercel ini.
-          </p>
-        </div>
-
-        <!-- Bagian 2: ID Folder Google Drive Utama (Opsional) -->
-        <div>
-          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-            2. Link / ID Folder Google Drive Utama (Opsional)
-          </label>
-          <input
-            id="configDriveFolderInput"
-            type="text"
-            placeholder="Kosongkan agar dibuat otomatis, atau tempel link folder Drive..."
-            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-teal-500"
-          />
-          <p class="text-[10px] text-slate-500 mt-1">
-            Jika dikosongkan, sistem otomatis membuat folder utama beserta Sub-Folder untuk setiap Mitra.
-          </p>
-        </div>
-
-        <!-- Bagian 3: ID Google Spreadsheet (Opsional) -->
-        <div>
-          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-            3. Link / ID Google Spreadsheet Database Mitra (Opsional)
-          </label>
-          <input
-            id="configSpreadsheetInput"
-            type="text"
-            placeholder="Kosongkan agar otomatis, atau tempel link Spreadsheet..."
-            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-teal-500"
-          />
-        </div>
-
-        <!-- Bagian 3B: Skenario B - Link / ID Google Spreadsheet hibualamo.shop -->
-        <div class="p-3.5 rounded-2xl bg-teal-50/90 dark:bg-teal-950/30 border border-teal-300 dark:border-teal-800 space-y-2.5">
-          <div class="flex items-center justify-between">
-            <label class="block text-xs font-extrabold text-teal-900 dark:text-teal-300">
-              <i class="fa-solid fa-store mr-1"></i>Skenario B: Sinkronisasi Spreadsheet <code class="font-mono">hibualamo.shop</code>
-            </label>
-            <span class="px-2 py-0.5 rounded bg-teal-600 text-white text-[10px] font-bold">Auto-Sync Saat Approve</span>
-          </div>
-
-          <div>
-            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Link / ID Google Spreadsheet Website <code class="font-mono">hibualamo.shop</code>:
-            </label>
-            <input
-              id="configHibualamoSpreadsheetInput"
-              type="text"
-              placeholder="Kosongkan jika menggunakan Spreadsheet yang sama, atau tempel link Spreadsheet hibualamo.shop..."
-              class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-teal-300 dark:border-teal-700 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-teal-500"
-            />
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <div>
-              <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Nama Tab Sheet Katalog <code class="font-mono">hibualamo.shop</code>:
-              </label>
-              <input
-                id="configHibualamoSheetNameInput"
-                type="text"
-                placeholder="Products_Hibualamo"
-                class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-teal-300 dark:border-teal-700 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-teal-500"
-              />
-            </div>
-            <div>
-              <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Endpoint JSON Katalog Approved:
-              </label>
-              <input
-                id="configHibualamoApiUrlOutput"
-                type="text"
-                readonly
-                onclick="this.select()"
-                class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-[11px] font-mono text-teal-700 dark:text-teal-300"
-              />
-            </div>
-          </div>
-
-          <p class="text-[10px] text-teal-800 dark:text-teal-300/90 leading-relaxed">
-            Saat Admin menekan tombol <strong>Approve</strong> pada produk Mitra, baris produk tersebut otomatis disalin/diperbarui ke Sheet <code class="font-mono">hibualamo.shop</code> di atas.
-          </p>
-        </div>
-
-        <!-- Bagian 4: API Key Google AI Studio / Gemini (Opsional untuk Vision Analyzer) -->
-        <div class="p-3.5 rounded-2xl bg-purple-50/80 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 space-y-2">
-          <label class="block text-xs font-extrabold text-purple-900 dark:text-purple-300">
-            4. Google AI Studio / Gemini API Key (Opsional — Mode 2 Tetap Jalan Tanpa Key)
-          </label>
-          <input
-            id="configGeminiKeyInput"
-            type="password"
-            placeholder="AIzaSy... (Opsional untuk Gemini Vision Analyzer)"
-            class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-purple-300 dark:border-purple-700 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-purple-500"
-          />
-          <p class="text-[10px] text-purple-800 dark:text-purple-300/90 leading-relaxed">
-            <strong>Mode 2 (AI Full Generate)</strong> sudah aktif otomatis menggunakan mesin Flux Commercial Studio. Jika Anda menambahkan API Key Gemini, sistem juga akan menganalisis bentuk & warna kemasan dari foto asli Anda agar hasil generate makin mirip.
-          </p>
-        </div>
-
-        <div class="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2">
-          <button
-            type="button"
-            onclick="closeDriveSyncConfigModal()"
-            class="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300 cursor-pointer"
-          >
-            Tutup
-          </button>
-          <button
-            id="btnSaveDriveConfig"
-            type="button"
-            onclick="submitDriveSyncConfig()"
-            class="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-extrabold shadow-lg flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <i class="fa-solid fa-bolt"></i>
-            <span>Simpan & Tes Buat Folder Drive Sekarang</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- =========================================================================
-       MODAL 7: LIGHTBOX PREVIEW GAMBAR
+       MODAL 7: LIGHTBOX PREVIEW GAMBAR (MENDUKUNG GALERI MULTI-FOTO)
        ========================================================================= -->
   <div id="imageLightboxModal" onclick="closeImageLightbox()" class="panel-hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md cursor-zoom-out">
     <div class="max-w-lg w-full bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-slate-800" onclick="event.stopPropagation()">
@@ -1299,6 +901,7 @@
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
+      <div id="lightboxThumbsContainer" class="panel-hidden px-4 py-2.5 bg-slate-900 border-b border-slate-800 flex items-center justify-center gap-2 overflow-x-auto"></div>
       <div class="p-4 flex items-center justify-between gap-3">
         <div class="min-w-0">
           <h4 id="lightboxTitle" class="font-extrabold text-sm text-slate-900 dark:text-white truncate">Nama Produk</h4>
@@ -1333,6 +936,7 @@
     const DEFAULT_GAS_EXEC_URL = 'https://script.google.com/macros/s/AKfycbzNUVAZoAuZ5zZi8nZEH2IF2spAI8slupwZK7OMx6cj3w7jSCEzs3p3tNi7Mkv_or6C/exec';
     const STORAGE_GAS_URL_KEY = 'PORTAL_SUPPLIER_GAS_EXEC_URL';
     const STORAGE_SESSION_USER_KEY = 'PORTAL_SUPPLIER_ACTIVE_SESSION';
+    const MAX_PRODUCT_PHOTOS = 5;
 
     let currentUser = null;
     let allProducts = [];
@@ -1345,8 +949,13 @@
     let aiFullGenBase64Image = '';
     let activePhotoVariant = 'fullgen';
 
+    // State Multi-Foto Produk (Maksimal 5 Foto)
+    let productPhotosList = [];
+    let activePhotoIndex = 0;
+
     let pendingDeleteProductId = null;
     let currentLightboxProduct = null;
+    let currentLightboxPhotoIndex = 0;
     let liveCameraStream = null;
     let currentCameraFacingMode = 'environment';
 
@@ -1478,49 +1087,49 @@
         }
       }
 
-      if (onError) {
-        onError(new Error('URL Web App Google Apps Script (/exec) belum dikonfigurasi.'));
-      }
-    }
-
-    function showBlockElement(id) {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.classList.remove('panel-hidden');
-    }
-
-    function hideElement(id) {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.classList.add('panel-hidden');
-    }
-
-    function extractDriveFileIdClient(inputUrlOrId) {
-      if (!inputUrlOrId) return '';
-      const raw = String(inputUrlOrId).trim();
-      const patterns = [
-        /lh3\.googleusercontent\.com\/d\/([a-zA-Z0-9_-]{10,})/,
-        /\/file\/d\/([a-zA-Z0-9_-]{10,})/,
-        /[?&]id=([a-zA-Z0-9_-]{10,})/
-      ];
-      for (let i = 0; i < patterns.length; i++) {
-        const match = raw.match(patterns[i]);
-        if (match && match[1]) return match[1];
-      }
-      if (/^[a-zA-Z0-9_-]{20,60}$/.test(raw)) {
-        return raw;
-      }
-      return '';
-    }
-
-    function convertDriveToLh3Client(inputUrlOrId) {
-      if (!inputUrlOrId) return '';
-      const raw = String(inputUrlOrId).trim();
+    function convertSingleDriveToLh3Client(singleUrlOrId) {
+      if (!singleUrlOrId) return '';
+      const raw = String(singleUrlOrId).trim();
+      if (!raw) return '';
       const fileId = extractDriveFileIdClient(raw);
       if (fileId) {
         return 'https://lh3.googleusercontent.com/d/' + fileId;
       }
       return raw;
+    }
+
+    function convertDriveToLh3Client(inputUrlOrId) {
+      if (!inputUrlOrId) return '';
+      const raw = String(inputUrlOrId).trim();
+      if (!raw) return '';
+      if (raw.indexOf('data:image/') === 0) return raw;
+      const parts = raw
+        .split(',')
+        .map(function (item) {
+          return convertSingleDriveToLh3Client(item);
+        })
+        .filter(Boolean)
+        .slice(0, MAX_PRODUCT_PHOTOS);
+      return parts.join(', ');
+    }
+
+    function parsePhotoUrlsClient(inputUrlOrId) {
+      if (!inputUrlOrId) return [];
+      const raw = String(inputUrlOrId).trim();
+      if (!raw) return [];
+      if (raw.indexOf('data:image/') === 0) return [raw];
+      return raw
+        .split(',')
+        .map(function (item) {
+          return convertSingleDriveToLh3Client(item);
+        })
+        .filter(Boolean)
+        .slice(0, MAX_PRODUCT_PHOTOS);
+    }
+
+    function getPrimaryPhotoUrlClient(inputUrlOrId) {
+      const list = parsePhotoUrlsClient(inputUrlOrId);
+      return list[0] || '';
     }
 
     function buildDirectDriveDownloadUrl(inputUrlOrId) {
@@ -2389,7 +1998,9 @@
     }
 
     function buildProductCardHtml(p, isAdmin) {
-      const safePhotoUrl = convertDriveToLh3Client(p.foto_url) || 'https://placehold.co/200x200/0f766e/ffffff?text=Produk';
+      const photoUrls = parsePhotoUrlsClient(p.foto_url);
+      const safePhotoUrl = photoUrls[0] || 'https://placehold.co/200x200/0f766e/ffffff?text=Produk';
+      const photoCount = photoUrls.length;
       const hargaModal = Number(p.harga_supplier || 0);
       const hargaJual = Number(p.harga_jual_supplier || 0);
       const hargaAsli = Number(p.harga_asli || p.harga_jual_lama || hargaJual);
@@ -2406,6 +2017,9 @@
               '<div class="flex items-start gap-3">' +
                 '<div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700 group">' +
                   '<img src="' + escapeHtml(safePhotoUrl) + '" referrerpolicy="no-referrer" alt="' + escapeHtml(p.nama_produk) + '" onclick="openImageLightbox(\'' + escapeJs(p.id_produk) + '\')" onerror="this.onerror=null;this.src=\'https://placehold.co/200x200/334155/ffffff?text=Foto\';" class="w-full h-full object-cover cursor-zoom-in group-hover:scale-105 transition duration-300" />' +
+                  (photoCount > 1
+                    ? '<span onclick="openImageLightbox(\'' + escapeJs(p.id_produk) + '\')" class="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-slate-900/80 text-white text-[9px] font-extrabold flex items-center gap-1 cursor-pointer" title="' + photoCount + ' Foto Produk"><i class="fa-regular fa-images"></i>' + photoCount + '</span>'
+                    : '') +
                   (isAdmin
                     ? '<button type="button" onclick="downloadProductPhoto(\'' + escapeJs(p.id_produk) + '\')" class="absolute bottom-1 right-1 w-6 h-6 rounded-md bg-slate-900/80 hover:bg-teal-600 text-white flex items-center justify-center text-[10px] shadow cursor-pointer" title="Unduh Foto Produk"><i class="fa-solid fa-download"></i></button>'
                     : '') +
@@ -2489,55 +2103,13 @@
     }
 
     function buildProductTableRowHtml(p, isAdmin) {
-      const safePhotoUrl = convertDriveToLh3Client(p.foto_url) || 'https://placehold.co/120x120/0f766e/ffffff?text=Foto';
+      const photoUrls = parsePhotoUrlsClient(p.foto_url);
+      const safePhotoUrl = photoUrls[0] || 'https://placehold.co/120x120/0f766e/ffffff?text=Foto';
       const hargaModal = Number(p.harga_supplier || 0);
       const hargaJual = Number(p.harga_jual_supplier || 0);
       const marginRp = hargaJual - hargaModal;
       const isApproved = String(p.status_approval || 'Pending').toLowerCase() === 'approved';
-
-      return (
-        '<tr class="hover:bg-slate-50/90 dark:hover:bg-slate-800/40 transition">' +
-          '<td class="py-3 px-4">' +
-            '<div class="flex items-center gap-3">' +
-              '<img src="' + escapeHtml(safePhotoUrl) + '" referrerpolicy="no-referrer" alt="' + escapeHtml(p.nama_produk) + '" onclick="openImageLightbox(\'' + escapeJs(p.id_produk) + '\')" onerror="this.onerror=null;this.src=\'https://placehold.co/100x100/334155/ffffff?text=NA\';" class="w-9 h-9 rounded-lg object-cover border border-slate-200 dark:border-slate-700 shrink-0 cursor-zoom-in" />' +
-              '<div class="min-w-0">' +
-                '<div class="font-bold text-slate-900 dark:text-white truncate max-w-xs">' + escapeHtml(p.nama_produk) + '</div>' +
-                '<div class="text-[11px] text-slate-400 font-mono">SKU: ' + escapeHtml(p.kode_sku || '-') + (isAdmin ? ' • <span class="text-amber-600 dark:text-amber-400 font-sans font-bold">' + escapeHtml(p.nama_supplier) + '</span>' : '') + '</div>' +
-                '<div class="mt-1">' + getApprovalBadgeHtml(p.status_approval, p.hibualamo_url) + '</div>' +
-              '</div>' +
-            '</div>' +
-          '</td>' +
-          '<td class="py-3 px-3 text-xs font-semibold text-slate-600 dark:text-slate-300">' + escapeHtml(p.kategori || 'Umum') + '</td>' +
-          '<td class="py-3 px-3">' +
-            '<div class="font-extrabold text-slate-800 dark:text-slate-100">' + formatRupiah(hargaModal) + '</div>' +
-            '<div>' + getPriceTrendBadge(hargaModal, p.harga_supplier_lama) + '</div>' +
-          '</td>' +
-          '<td class="py-3 px-3">' +
-            '<div class="font-extrabold text-teal-700 dark:text-teal-300">' + formatRupiah(hargaJual) + '</div>' +
-            '<div>' + getPriceTrendBadge(hargaJual, p.harga_jual_lama) + '</div>' +
-          '</td>' +
-          '<td class="py-3 px-3 font-bold text-emerald-600 dark:text-emerald-400 text-xs">' + formatRupiah(marginRp) + '</td>' +
-          '<td class="py-3 px-3">' +
-            '<span class="font-extrabold text-slate-800 dark:text-slate-100">' + Number(p.total_stok || 0).toLocaleString('id-ID') + '</span> ' +
-            '<span class="text-[11px] text-slate-400">' + escapeHtml(p.satuan || '') + '</span>' +
-          '</td>' +
-          '<td class="py-3 px-3 text-[11px] text-slate-400">' + escapeHtml(p.updated_at || '-') + '</td>' +
-          '<td class="py-3 px-4 text-right whitespace-nowrap">' +
-            (isAdmin && !isApproved
-              ? '<button type="button" onclick="handleApprovalDecision(\'' + escapeJs(p.id_produk) + '\', \'Approved\')" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs mr-1 cursor-pointer" title="Approve ke Hibualamo.shop"><i class="fa-solid fa-check mr-1"></i>Approve</button>'
-              : '') +
-            (isAdmin
-              ? '<button type="button" onclick="downloadProductPhoto(\'' + escapeJs(p.id_produk) + '\')" class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs mr-1 cursor-pointer" title="Unduh Foto"><i class="fa-solid fa-download"></i></button>'
-              : '') +
-            '<button type="button" onclick="openQuickPriceModal(\'' + escapeJs(p.id_produk) + '\')" class="px-2.5 py-1 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 font-bold text-xs mr-1 cursor-pointer">Update</button>' +
-            '<button type="button" onclick="openProductModal(\'' + escapeJs(p.id_produk) + '\')" class="p-1.5 text-slate-500 hover:text-slate-800 dark:hover:text-white cursor-pointer"><i class="fa-solid fa-pen"></i></button>' +
-            '<button type="button" onclick="openDeleteConfirmModal(\'' + escapeJs(p.id_produk) + '\')" class="p-1.5 text-rose-500 hover:text-rose-700 ml-1 cursor-pointer"><i class="fa-solid fa-trash"></i></button>' +
-          '</td>' +
-        '</tr>'
-      );
-    }
-
-    function downloadProductPhoto(idProduk) {
+    function downloadProductPhoto(idProduk, specificPhotoUrl) {
       if (!currentUser || String(currentUser.role || '').toLowerCase() !== 'admin') {
         showToast('Fitur unduh foto hanya tersedia untuk Admin.', 'warning');
         return;
@@ -2549,8 +2121,8 @@
       if (!prod) return;
 
       const safeFileName =
-        (prod.kode_sku || prod.id_produk || ' produk').replace(/[^a-zA-Z0-9_-]/g, '_') + '.jpg';
-      const rawPhotoUrl = prod.foto_url || '';
+        (prod.kode_sku || prod.id_produk || 'produk').replace(/[^a-zA-Z0-9_-]/g, '_') + '.jpg';
+      const rawPhotoUrl = specificPhotoUrl || getPrimaryPhotoUrlClient(prod.foto_url) || '';
 
       if (rawPhotoUrl.indexOf('data:image/') === 0) {
         triggerBrowserDownload(rawPhotoUrl, safeFileName);
@@ -2558,7 +2130,7 @@
         return;
       }
 
-      const fileId = prod.drive_file_id || extractDriveFileIdClient(rawPhotoUrl);
+      const fileId = extractDriveFileIdClient(rawPhotoUrl) || prod.drive_file_id;
 
       if (fileId) {
         showToast('Menyiapkan unduhan foto dari Google Drive...');
@@ -2592,8 +2164,180 @@
       document.body.removeChild(a);
     }
 
+    /**
+     * ========================================================================
+     * MANAJEMEN MULTI-FOTO PRODUK (MAKSIMAL 5 FOTO PER PRODUK)
+     * ========================================================================
+     */
+    function getSlotDisplayImage(slot) {
+      if (!slot) return 'https://placehold.co/200x200/0f766e/ffffff?text=Preview';
+      if (slot.activeVariant === 'fullgen' && slot.aiBase64) return slot.aiBase64;
+      if (slot.rawBase64) return slot.rawBase64;
+      if (slot.url) return convertSingleDriveToLh3Client(slot.url);
+      return 'https://placehold.co/200x200/0f766e/ffffff?text=Preview';
+    }
+
+    function syncFormUrlInputFromSlots() {
+      const urlInput = document.getElementById('formFotoUrl');
+      if (!urlInput) return;
+      const urlParts = productPhotosList
+        .map(function (slot) {
+          if (slot.url && !slot.rawBase64 && !slot.aiBase64) {
+            return convertSingleDriveToLh3Client(slot.url);
+          }
+          return '';
+        })
+        .filter(Boolean);
+      urlInput.value = urlParts.join(', ');
+    }
+
+    function renderMultiPhotoSlotsUI() {
+      const countBadge = document.getElementById('photoCountBadge');
+      const previewBox = document.getElementById('photoPreviewBox');
+      const slotsContainer = document.getElementById('multiPhotoSlotsContainer');
+      const previewEl = document.getElementById('formImagePreview');
+      const switchWrap = document.getElementById('aiPhotoSwitchWrap');
+      const btnSetPrimary = document.getElementById('btnSetAsPrimaryPhoto');
+      const badgeEl = document.getElementById('compressionBadge');
+      const noteEl = document.getElementById('aiStatusNote');
+
+      const total = productPhotosList.length;
+      if (countBadge) {
+        countBadge.textContent = total + ' / ' + MAX_PRODUCT_PHOTOS + ' Foto';
+        countBadge.className =
+          total >= MAX_PRODUCT_PHOTOS
+            ? 'text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300'
+            : 'text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800';
+      }
+
+      if (total === 0) {
+        if (previewBox) previewBox.classList.add('panel-hidden');
+        if (slotsContainer) slotsContainer.innerHTML = '';
+        compressedBase64Image = '';
+        rawCapturedBase64Image = '';
+        aiFullGenBase64Image = '';
+        return;
+      }
+
+      if (activePhotoIndex >= total) activePhotoIndex = total - 1;
+      if (activePhotoIndex < 0) activePhotoIndex = 0;
+
+      if (previewBox) previewBox.classList.remove('panel-hidden');
+
+      if (slotsContainer) {
+        slotsContainer.innerHTML = productPhotosList
+          .map(function (slot, idx) {
+            const imgSrc = getSlotDisplayImage(slot);
+            const isSelected = idx === activePhotoIndex;
+            const isPrimary = idx === 0;
+            const borderCls = isSelected
+              ? 'ring-2 ring-blue-600 border-blue-600'
+              : 'border-slate-200 dark:border-slate-700 opacity-85 hover:opacity-100';
+            return (
+              '<div class="relative w-16 h-16 rounded-xl bg-white dark:bg-slate-900 border ' +
+              borderCls +
+              ' overflow-hidden shrink-0 group cursor-pointer transition" onclick="selectPhotoSlot(' +
+              idx +
+              ')">' +
+              '<img src="' +
+              escapeHtml(imgSrc) +
+              '" referrerpolicy="no-referrer" alt="Foto ' +
+              (idx + 1) +
+              '" class="w-full h-full object-cover" />' +
+              '<span class="absolute bottom-0.5 left-0.5 px-1.5 py-0.2 rounded text-[8px] font-extrabold ' +
+              (isPrimary ? 'bg-blue-600 text-white' : 'bg-slate-900/75 text-white') +
+              '">' +
+              (isPrimary ? 'Utama' : '#' + (idx + 1)) +
+              '</span>' +
+              '<button type="button" onclick="event.stopPropagation();removePhotoSlot(' +
+              idx +
+              ')" class="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center text-[10px] shadow cursor-pointer" title="Hapus Foto Ini">' +
+              '<i class="fa-solid fa-xmark"></i>' +
+              '</button>' +
+              '</div>'
+            );
+          })
+          .join('');
+      }
+
+      const activeSlot = productPhotosList[activePhotoIndex];
+      const activeImg = getSlotDisplayImage(activeSlot);
+      if (previewEl) previewEl.src = activeImg;
+
+      rawCapturedBase64Image = activeSlot.rawBase64 || '';
+      aiFullGenBase64Image = activeSlot.aiBase64 || '';
+      compressedBase64Image =
+        activeSlot.activeVariant === 'fullgen' && activeSlot.aiBase64
+          ? activeSlot.aiBase64
+          : activeSlot.rawBase64 || '';
+
+      if (btnSetPrimary) {
+        if (activePhotoIndex > 0) {
+          btnSetPrimary.classList.remove('panel-hidden');
+        } else {
+          btnSetPrimary.classList.add('panel-hidden');
+        }
+      }
+
+      if (activeSlot.rawBase64 || activeSlot.aiBase64) {
+        if (switchWrap) switchWrap.classList.remove('panel-hidden');
+        if (badgeEl) {
+          badgeEl.textContent = activeSlot.activeVariant === 'fullgen' && activeSlot.aiBase64 ? 'AI Studio' : 'Foto Asli';
+          badgeEl.classList.remove('panel-hidden');
+        }
+      } else {
+        if (switchWrap) {
+          if (activePhotoIndex > 0) {
+            switchWrap.classList.remove('panel-hidden');
+          } else {
+            switchWrap.classList.add('panel-hidden');
+          }
+        }
+        if (badgeEl) {
+          badgeEl.textContent = 'Link URL';
+          badgeEl.classList.remove('panel-hidden');
+        }
+        if (noteEl) {
+          noteEl.innerHTML =
+            'Foto #' +
+            (activePhotoIndex + 1) +
+            ' siap disimpan & dikonversi ke link anti-blokir <code class="font-mono">lh3.googleusercontent.com</code>.';
+        }
+      }
+    }
+
+    function selectPhotoSlot(idx) {
+      if (idx < 0 || idx >= productPhotosList.length) return;
+      activePhotoIndex = idx;
+      renderMultiPhotoSlotsUI();
+    }
+
+    function removePhotoSlot(idx) {
+      if (idx < 0 || idx >= productPhotosList.length) return;
+      productPhotosList.splice(idx, 1);
+      if (activePhotoIndex >= productPhotosList.length) {
+        activePhotoIndex = Math.max(0, productPhotosList.length - 1);
+      }
+      syncFormUrlInputFromSlots();
+      renderMultiPhotoSlotsUI();
+    }
+
+    function setCurrentSlotAsPrimary() {
+      if (activePhotoIndex <= 0 || activePhotoIndex >= productPhotosList.length) return;
+      const chosen = productPhotosList.splice(activePhotoIndex, 1)[0];
+      productPhotosList.unshift(chosen);
+      activePhotoIndex = 0;
+      syncFormUrlInputFromSlots();
+      renderMultiPhotoSlotsUI();
+      showToast('Foto dijadikan sebagai Foto Utama (#1).');
+    }
+
     function triggerGalleryPicker() {
       stopDirectCamera();
+      if (productPhotosList.length >= MAX_PRODUCT_PHOTOS) {
+        showToast('Maksimal ' + MAX_PRODUCT_PHOTOS + ' foto per produk! Hapus salah satu foto jika ingin mengganti.', 'warning');
+        return;
+      }
       const galleryInput = document.getElementById('formGalleryInput');
       if (galleryInput) {
         galleryInput.value = '';
@@ -2602,6 +2346,10 @@
     }
 
     async function startDirectCamera() {
+      if (productPhotosList.length >= MAX_PRODUCT_PHOTOS) {
+        showToast('Maksimal ' + MAX_PRODUCT_PHOTOS + ' foto per produk! Hapus salah satu foto jika ingin menambah.', 'warning');
+        return;
+      }
       const container = document.getElementById('liveCameraContainer');
       const video = document.getElementById('liveCameraVideo');
 
@@ -2652,6 +2400,12 @@
     }
 
     function capturePhotoFromLiveCamera() {
+      if (productPhotosList.length >= MAX_PRODUCT_PHOTOS) {
+        stopDirectCamera();
+        showToast('Maksimal ' + MAX_PRODUCT_PHOTOS + ' foto per produk sudah tercapai!', 'warning');
+        return;
+      }
+
       const video = document.getElementById('liveCameraVideo');
       if (!video || !video.videoWidth) {
         showToast('Kamera belum siap, tunggu 1 detik lalu coba lagi.', 'warning');
@@ -2676,25 +2430,29 @@
       ctx.drawImage(video, 0, 0, width, height);
 
       const capturedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
-      stopDirectCamera();
+      if (productPhotosList.length + 1 >= MAX_PRODUCT_PHOTOS) {
+        stopDirectCamera();
+      }
 
-      processNewRawPhotoWithAiFullGenerate(capturedDataUrl);
+      addAndProcessRawPhotoSlot(capturedDataUrl);
     }
 
     function selectPhotoVariant(variant) {
+      const slot = productPhotosList[activePhotoIndex];
       const previewEl = document.getElementById('formImagePreview');
       const badge = document.getElementById('compressionBadge');
       const btnFullGen = document.getElementById('btnUseAiFullGen');
       const btnRaw = document.getElementById('btnUseRawPhoto');
       const noteEl = document.getElementById('aiStatusNote');
 
-      const activeClass = 'px-2 py-1 rounded-md text-[9px] font-extrabold bg-purple-600 text-white shadow-sm cursor-pointer transition';
-      const inactiveClass = 'px-2 py-1 rounded-md text-[9px] font-bold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 cursor-pointer transition';
+      const activeClass = 'px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-purple-600 text-white shadow-sm cursor-pointer transition';
+      const inactiveClass = 'px-2.5 py-1 rounded-md text-[10px] font-bold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 cursor-pointer transition';
 
-      if (variant === 'raw' && rawCapturedBase64Image) {
+      if (variant === 'raw' && (rawCapturedBase64Image || (slot && slot.rawBase64))) {
         activePhotoVariant = 'raw';
-        compressedBase64Image = rawCapturedBase64Image;
-        if (previewEl) previewEl.src = rawCapturedBase64Image;
+        if (slot) slot.activeVariant = 'raw';
+        compressedBase64Image = (slot && slot.rawBase64) || rawCapturedBase64Image;
+        if (previewEl) previewEl.src = compressedBase64Image;
         if (badge) {
           badge.textContent = 'Foto Asli';
           badge.classList.remove('panel-hidden');
@@ -2702,10 +2460,11 @@
         if (btnFullGen) btnFullGen.className = inactiveClass;
         if (btnRaw) btnRaw.className = activeClass;
         if (noteEl) noteEl.innerHTML = 'Menggunakan <strong>Foto Asli</strong> dari kamera/galeri.';
-      } else if (aiFullGenBase64Image) {
+      } else if (aiFullGenBase64Image || (slot && slot.aiBase64)) {
         activePhotoVariant = 'fullgen';
-        compressedBase64Image = aiFullGenBase64Image;
-        if (previewEl) previewEl.src = aiFullGenBase64Image;
+        if (slot) slot.activeVariant = 'fullgen';
+        compressedBase64Image = (slot && slot.aiBase64) || aiFullGenBase64Image;
+        if (previewEl) previewEl.src = compressedBase64Image;
         if (badge) {
           badge.textContent = 'AI Studio';
           badge.classList.remove('panel-hidden');
@@ -2717,18 +2476,44 @@
             '<span class="text-purple-600 dark:text-purple-400 font-bold"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Mode 2 (AI Full Generate) Aktif:</span> Foto produk di-generate ulang dengan prompt <em>"Premium product photography, clean studio lighting..."</em>';
         }
       }
+      renderMultiPhotoSlotsUI();
     }
 
     function regenerateAiFullPhoto() {
-      const rawSource = rawCapturedBase64Image || compressedBase64Image;
+      const slot = productPhotosList[activePhotoIndex];
+      const rawSource = (slot && slot.rawBase64) || rawCapturedBase64Image || compressedBase64Image;
       if (!rawSource) {
-        showToast('Ambil foto dari kamera atau pilih dari galeri terlebih dahulu.', 'warning');
+        showToast('Pilih foto hasil kamera/upload terlebih dahulu untuk di-generate AI.', 'warning');
         return;
       }
-      processNewRawPhotoWithAiFullGenerate(rawSource);
+      processNewRawPhotoWithAiFullGenerate(rawSource, activePhotoIndex);
     }
 
-    async function processNewRawPhotoWithAiFullGenerate(rawDataUrl) {
+    function addAndProcessRawPhotoSlot(rawDataUrl) {
+      if (productPhotosList.length >= MAX_PRODUCT_PHOTOS) {
+        showToast('Maksimal ' + MAX_PRODUCT_PHOTOS + ' foto per produk!', 'warning');
+        return;
+      }
+      const newSlotIndex = productPhotosList.length;
+      productPhotosList.push({
+        url: '',
+        rawBase64: rawDataUrl,
+        aiBase64: '',
+        activeVariant: 'raw',
+        mimeType: 'image/jpeg'
+      });
+      activePhotoIndex = newSlotIndex;
+      renderMultiPhotoSlotsUI();
+      processNewRawPhotoWithAiFullGenerate(rawDataUrl, newSlotIndex);
+    }
+
+    async function processNewRawPhotoWithAiFullGenerate(rawDataUrl, targetSlotIndex) {
+      const slotIdx = targetSlotIndex !== undefined ? targetSlotIndex : activePhotoIndex;
+      const slot = productPhotosList[slotIdx];
+      if (slot) {
+        slot.rawBase64 = rawDataUrl;
+      }
+
       rawCapturedBase64Image = rawDataUrl;
       aiFullGenBase64Image = '';
       compressedBase64Image = rawDataUrl;
@@ -2762,26 +2547,31 @@
         [rawDataUrl, GOOGLE_FLOW_PRODUCT_PROMPT, combinedHint],
         async function (res) {
           if (res && res.success && res.aiBase64Image) {
+            let finalAiImg = res.aiBase64Image;
             try {
-              const optimized = await compressDataUrlToJpeg(res.aiBase64Image, 800, 0.86);
-              aiFullGenBase64Image = optimized;
-            } catch (e) {
-              aiFullGenBase64Image = res.aiBase64Image;
+              finalAiImg = await compressDataUrlToJpeg(res.aiBase64Image, 800, 0.86);
+            } catch (e) {}
+            aiFullGenBase64Image = finalAiImg;
+            if (productPhotosList[slotIdx]) {
+              productPhotosList[slotIdx].aiBase64 = finalAiImg;
+              productPhotosList[slotIdx].activeVariant = 'fullgen';
             }
             if (overlayEl) overlayEl.classList.add('panel-hidden');
+            activePhotoIndex = slotIdx;
             selectPhotoVariant('fullgen');
-            showToast('Foto produk berhasil di-generate dengan AI Studio (Mode 2)!');
+            showToast('Foto #' + (slotIdx + 1) + ' berhasil di-generate dengan AI Studio (Mode 2)!');
           } else {
-            await runClientDirectFluxGenerator(combinedHint, overlayEl);
+            await runClientDirectFluxGenerator(combinedHint, overlayEl, slotIdx);
           }
         },
         async function () {
-          await runClientDirectFluxGenerator(combinedHint, overlayEl);
+          await runClientDirectFluxGenerator(combinedHint, overlayEl, slotIdx);
         }
       );
     }
 
-    async function runClientDirectFluxGenerator(subjectHint, overlayEl) {
+    async function runClientDirectFluxGenerator(subjectHint, overlayEl, targetSlotIndex) {
+      const slotIdx = targetSlotIndex !== undefined ? targetSlotIndex : activePhotoIndex;
       try {
         const subjectText = subjectHint
           ? ('Commercial retail product package of ' + subjectHint)
@@ -2801,11 +2591,17 @@
 
         const dataUrl = await fetchExternalImageAsBase64(fluxUrl);
         aiFullGenBase64Image = dataUrl;
+        if (productPhotosList[slotIdx]) {
+          productPhotosList[slotIdx].aiBase64 = dataUrl;
+          productPhotosList[slotIdx].activeVariant = 'fullgen';
+        }
         if (overlayEl) overlayEl.classList.add('panel-hidden');
+        activePhotoIndex = slotIdx;
         selectPhotoVariant('fullgen');
-        showToast('Foto produk berhasil di-generate dengan AI Studio (Mode 2)!');
+        showToast('Foto #' + (slotIdx + 1) + ' berhasil di-generate dengan AI Studio (Mode 2)!');
       } catch (err) {
         if (overlayEl) overlayEl.classList.add('panel-hidden');
+        activePhotoIndex = slotIdx;
         selectPhotoVariant('raw');
         showToast('Menggunakan foto asli (Server AI sedang sibuk).', 'warning');
       }
@@ -2865,6 +2661,8 @@
       rawCapturedBase64Image = '';
       aiFullGenBase64Image = '';
       compressedMimeType = 'image/jpeg';
+      productPhotosList = [];
+      activePhotoIndex = 0;
 
       const fileInputEl = document.getElementById('formFileInput');
       const galleryInputEl = document.getElementById('formGalleryInput');
@@ -2916,15 +2714,17 @@
         document.getElementById('formFotoUrl').value = prod.foto_url || '';
         document.getElementById('formCatatan').value = prod.catatan || '';
 
-        if (prod.foto_url) {
-          if (previewBox) previewBox.classList.remove('panel-hidden');
-          if (previewEl) {
-            previewEl.src =
-              convertDriveToLh3Client(prod.foto_url) || 'https://placehold.co/200x200/0f766e/ffffff?text=Preview';
-          }
-        } else if (previewBox) {
-          previewBox.classList.add('panel-hidden');
-        }
+        const existingUrls = parsePhotoUrlsClient(prod.foto_url);
+        existingUrls.forEach(function (u) {
+          productPhotosList.push({
+            url: u,
+            rawBase64: '',
+            aiBase64: '',
+            activeVariant: 'url',
+            mimeType: 'image/jpeg'
+          });
+        });
+        renderMultiPhotoSlotsUI();
 
         if (currentUser && String(currentUser.role).toLowerCase() === 'admin') {
           const supSelect = document.getElementById('formSupplierOwner');
@@ -2947,10 +2747,7 @@
         document.getElementById('formFotoUrl').value = '';
         document.getElementById('formCatatan').value = '';
 
-        if (previewBox) previewBox.classList.add('panel-hidden');
-        if (previewEl) {
-          previewEl.src = 'https://placehold.co/200x200/0f766e/ffffff?text=Preview';
-        }
+        renderMultiPhotoSlotsUI();
         if (currentUser && String(currentUser.role).toLowerCase() === 'admin') {
           const supSelect = document.getElementById('formSupplierOwner');
           if (supSelect) supSelect.value = '';
@@ -2998,46 +2795,80 @@
 
     function handleDirectUrlInput() {
       const raw = document.getElementById('formFotoUrl').value;
-      const converted = convertDriveToLh3Client(raw);
-      const previewEl = document.getElementById('formImagePreview');
-      if (converted) {
-        document.getElementById('formFotoUrl').value = converted;
-        if (previewEl) previewEl.src = converted;
+      const uploadedSlots = productPhotosList.filter(function (s) {
+        return Boolean(s.rawBase64 || s.aiBase64);
+      });
+      const maxRemainingUrlSlots = Math.max(0, MAX_PRODUCT_PHOTOS - uploadedSlots.length);
+
+      const rawUrlParts = String(raw || '')
+        .split(',')
+        .map(function (s) { return convertSingleDriveToLh3Client(s); })
+        .filter(Boolean);
+
+      if (rawUrlParts.length > maxRemainingUrlSlots) {
+        showToast('Maksimal total ' + MAX_PRODUCT_PHOTOS + ' foto per produk!', 'warning');
       }
+
+      const allowedUrls = rawUrlParts.slice(0, maxRemainingUrlSlots);
+      const urlSlots = allowedUrls.map(function (u) {
+        return {
+          url: u,
+          rawBase64: '',
+          aiBase64: '',
+          activeVariant: 'url',
+          mimeType: 'image/jpeg'
+        };
+      });
+
+      productPhotosList = urlSlots.concat(uploadedSlots).slice(0, MAX_PRODUCT_PHOTOS);
+      renderMultiPhotoSlotsUI();
     }
 
     function handleImageFileSelected(event) {
-      const file = event.target.files && event.target.files[0];
-      if (!file) return;
+      const files = event.target.files ? Array.from(event.target.files) : [];
+      if (!files.length) return;
 
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        const img = new Image();
-        img.onload = function () {
-          const MAX_DIM = 800;
-          let width = img.width;
-          let height = img.height;
+      const remainingSlots = MAX_PRODUCT_PHOTOS - productPhotosList.length;
+      if (remainingSlots <= 0) {
+        showToast('Maksimal ' + MAX_PRODUCT_PHOTOS + ' foto per produk sudah tercapai!', 'warning');
+        return;
+      }
 
-          if (width > height && width > MAX_DIM) {
-            height = Math.round((height * MAX_DIM) / width);
-            width = MAX_DIM;
-          } else if (height > MAX_DIM) {
-            width = Math.round((width * MAX_DIM) / height);
-            height = MAX_DIM;
-          }
+      if (files.length > remainingSlots) {
+        showToast('Hanya ' + remainingSlots + ' foto lagi yang dapat ditambahkan (Maksimal 5 foto per produk).', 'warning');
+      }
 
-          const canvas = document.createElement('canvas');
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
+      const filesToRead = files.slice(0, remainingSlots);
+      filesToRead.forEach(function (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const img = new Image();
+          img.onload = function () {
+            const MAX_DIM = 800;
+            let width = img.width;
+            let height = img.height;
 
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-          processNewRawPhotoWithAiFullGenerate(dataUrl);
+            if (width > height && width > MAX_DIM) {
+              height = Math.round((height * MAX_DIM) / width);
+              width = MAX_DIM;
+            } else if (height > MAX_DIM) {
+              width = Math.round((width * MAX_DIM) / height);
+              height = MAX_DIM;
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            addAndProcessRawPhotoSlot(dataUrl);
+          };
+          img.src = e.target.result;
         };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
+        reader.readAsDataURL(file);
+      });
     }
 
     function submitProductForm() {
@@ -3062,6 +2893,22 @@
         return;
       }
 
+      const photoItemsPayload = productPhotosList.slice(0, MAX_PRODUCT_PHOTOS).map(function (slot) {
+        const chosenBase64 =
+          slot.activeVariant === 'fullgen' && slot.aiBase64
+            ? slot.aiBase64
+            : slot.rawBase64 || '';
+        return {
+          url: chosenBase64 ? '' : convertSingleDriveToLh3Client(slot.url || ''),
+          base64_image: chosenBase64,
+          mime_type: slot.mimeType || 'image/jpeg'
+        };
+      });
+
+      const firstUploaded = photoItemsPayload.find(function (item) {
+        return Boolean(item.base64_image);
+      });
+
       const payload = {
         id_produk: document.getElementById('formIdProduk').value,
         nama_produk: nama,
@@ -3077,9 +2924,10 @@
         harga_jual_supplier: hargaJual,
         is_terlaris: isTerlaris,
         foto_url: convertDriveToLh3Client(document.getElementById('formFotoUrl').value.trim()),
+        photo_items: photoItemsPayload,
         catatan: document.getElementById('formCatatan').value.trim(),
         deskripsi: document.getElementById('formCatatan').value.trim(),
-        base64_image: compressedBase64Image,
+        base64_image: firstUploaded ? firstUploaded.base64_image : '',
         mime_type: compressedMimeType,
         file_name: nama.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase() + '_' + Date.now() + '.jpg'
       };
@@ -3408,11 +3256,25 @@
       });
       if (!prod) return;
       currentLightboxProduct = prod;
-      const url = convertDriveToLh3Client(prod.foto_url);
-      document.getElementById('lightboxImg').src = url;
+      currentLightboxPhotoIndex = 0;
+
+      const photos = parsePhotoUrlsClient(prod.foto_url);
+      const primaryUrl = photos[0] || convertSingleDriveToLh3Client(prod.foto_url);
+      document.getElementById('lightboxImg').src = primaryUrl;
       document.getElementById('lightboxTitle').textContent =
         prod.nama_produk + ' — ' + formatRupiah(prod.harga_jual_supplier);
-      document.getElementById('lightboxUrl').textContent = url;
+      document.getElementById('lightboxUrl').textContent = primaryUrl;
+
+      const thumbsBox = document.getElementById('lightboxThumbsContainer');
+      if (thumbsBox) {
+        if (photos.length > 1) {
+          thumbsBox.classList.remove('panel-hidden');
+          renderLightboxThumbs(photos);
+        } else {
+          thumbsBox.classList.add('panel-hidden');
+          thumbsBox.innerHTML = '';
+        }
+      }
 
       const isAdmin = currentUser && String(currentUser.role || '').toLowerCase() === 'admin';
       const dlBtn = document.getElementById('btnLightboxDownload');
@@ -3429,9 +3291,45 @@
       showBlockElement('imageLightboxModal');
     }
 
+    function renderLightboxThumbs(photos) {
+      const thumbsBox = document.getElementById('lightboxThumbsContainer');
+      if (!thumbsBox) return;
+      thumbsBox.innerHTML = photos
+        .map(function (url, idx) {
+          const activeCls =
+            idx === currentLightboxPhotoIndex
+              ? 'ring-2 ring-teal-400 border-teal-400 opacity-100'
+              : 'border-slate-700 opacity-60 hover:opacity-100';
+          return (
+            '<img src="' +
+            escapeHtml(url) +
+            '" referrerpolicy="no-referrer" onclick="switchLightboxPhoto(' +
+            idx +
+            ')" class="w-12 h-12 rounded-lg object-cover border cursor-pointer transition ' +
+            activeCls +
+            '" alt="Foto ' +
+            (idx + 1) +
+            '" />'
+          );
+        })
+        .join('');
+    }
+
+    function switchLightboxPhoto(idx) {
+      if (!currentLightboxProduct) return;
+      const photos = parsePhotoUrlsClient(currentLightboxProduct.foto_url);
+      if (!photos[idx]) return;
+      currentLightboxPhotoIndex = idx;
+      document.getElementById('lightboxImg').src = photos[idx];
+      document.getElementById('lightboxUrl').textContent = photos[idx];
+      renderLightboxThumbs(photos);
+    }
+
     function downloadCurrentLightboxPhoto() {
       if (currentLightboxProduct) {
-        downloadProductPhoto(currentLightboxProduct.id_produk);
+        const photos = parsePhotoUrlsClient(currentLightboxProduct.foto_url);
+        const activeUrl = photos[currentLightboxPhotoIndex] || getPrimaryPhotoUrlClient(currentLightboxProduct.foto_url);
+        downloadProductPhoto(currentLightboxProduct.id_produk, activeUrl);
       }
     }
 
@@ -3492,6 +3390,10 @@
     window.capturePhotoFromLiveCamera = capturePhotoFromLiveCamera;
     window.selectPhotoVariant = selectPhotoVariant;
     window.regenerateAiFullPhoto = regenerateAiFullPhoto;
+    window.selectPhotoSlot = selectPhotoSlot;
+    window.removePhotoSlot = removePhotoSlot;
+    window.setCurrentSlotAsPrimary = setCurrentSlotAsPrimary;
+    window.switchLightboxPhoto = switchLightboxPhoto;
     window.submitProductForm = submitProductForm;
     window.openQuickPriceModal = openQuickPriceModal;
     window.closeQuickPriceModal = closeQuickPriceModal;
