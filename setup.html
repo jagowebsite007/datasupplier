@@ -33,6 +33,11 @@ function extractGoogleId_(inputUrlOrId) {
     return sheetMatch[1];
   }
 
+  const folderMatch = raw.match(/\/folders\/([a-zA-Z0-9_-]{15,})/);
+  if (folderMatch && folderMatch[1]) {
+    return folderMatch[1];
+  }
+
   const fileMatch = raw.match(/\/d\/([a-zA-Z0-9_-]{15,})/);
   if (fileMatch && fileMatch[1]) {
     return fileMatch[1];
