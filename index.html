@@ -564,182 +564,268 @@
        MODAL 1: TAMBAH / EDIT PRODUK & KAMERA / GALERI + AI FULL GENERATE (MODE 2)
        ========================================================================= -->
   <div id="productModal" class="panel-hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm overflow-y-auto">
-    <div class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-8">
-      <div class="px-6 py-4 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-        <div class="flex items-center gap-2.5">
-          <div class="w-9 h-9 rounded-xl bg-teal-600/10 text-teal-600 flex items-center justify-center">
-            <i class="fa-solid fa-pen-to-square"></i>
-          </div>
-          <div>
-            <h3 id="productModalTitle" class="font-extrabold text-base text-slate-900 dark:text-white">Tambah Produk Mitra</h3>
-            <p class="text-[11px] text-slate-500">Foto dari kamera/galeri otomatis di-generate dengan AI Studio (Mode 2: Google Flow Prompt)</p>
-          </div>
-        </div>
-        <button type="button" onclick="closeProductModal()" class="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 flex items-center justify-center cursor-pointer">
+    <div class="bg-white dark:bg-slate-900 w-full max-w-4xl rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-8">
+      <!-- Header Form Sesuai Gambar -->
+      <div class="px-6 pt-6 pb-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <h3 id="productModalTitle" class="font-extrabold text-base sm:text-lg text-slate-900 dark:text-white">Tambah Produk Baru ke Database</h3>
+        <button type="button" onclick="closeProductModal()" class="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer transition" title="Tutup">
           <i class="fa-solid fa-xmark text-lg"></i>
         </button>
       </div>
 
-      <div class="p-6 space-y-4 max-h-[82vh] overflow-y-auto">
+      <div class="p-6 space-y-4 max-h-[84vh] overflow-y-auto">
         <input type="hidden" id="formIdProduk" />
+        <input type="hidden" id="formKodeSku" />
 
-        <!-- Pilih Mitra (Khusus Admin) -->
-        <div id="adminSupplierSelectWrap" class="panel-hidden p-3.5 rounded-2xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60">
-          <label class="block text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300 mb-1">Pemilik Produk (Mode Admin) — Menentukan Sub-Folder Drive</label>
-          <select id="formSupplierOwner" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-amber-300 dark:border-amber-700 text-xs sm:text-sm font-semibold"></select>
-        </div>
-
-        <!-- Baris 1: Nama Produk & SKU -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div class="sm:col-span-2">
-            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">Nama Produk *</label>
+        <!-- Baris 1: Nama Produk * (2/3) & Supplier (1/3) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="md:col-span-2">
+            <label for="formNamaProduk" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Nama Produk *</label>
             <input
               id="formNamaProduk"
               type="text"
-              placeholder="Contoh: Beras Premium Ramos 5 Kg"
-              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-500"
+              placeholder="Contoh: TWS Earbuds Bluetooth 5.3"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
             />
           </div>
           <div>
-            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">Kode SKU / Barang</label>
-            <input
-              id="formKodeSku"
-              type="text"
-              placeholder="BRS-PRM-5KG"
-              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-teal-500"
-            />
+            <label for="formSupplierOwner" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Supplier</label>
+            <select
+              id="formSupplierOwner"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            >
+              <option value="" data-name="Tanpa Supplier">-- Tanpa Supplier --</option>
+            </select>
           </div>
         </div>
 
-        <!-- Baris 2: Kategori Manual, Satuan & Total Stok -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <!-- Baris 2: Kategori Utama *, Sub-Kategori, Stok Produk * -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">Kategori (Isi Manual) *</label>
-            <input
+            <label for="formKategori" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Kategori Utama *</label>
+            <select
               id="formKategori"
-              type="text"
-              placeholder="Contoh: Sembako / Minuman"
-              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-500"
-            />
+              onchange="handleKategoriUtamaChange(this.value)"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            >
+              <option value="Elektronik">Elektronik</option>
+              <option value="Sembako">Sembako</option>
+              <option value="Makanan & Minuman">Makanan & Minuman</option>
+              <option value="Fashion Pria">Fashion Pria</option>
+              <option value="Fashion Wanita">Fashion Wanita</option>
+              <option value="Kesehatan & Kecantikan">Kesehatan & Kecantikan</option>
+              <option value="Rumah Tangga">Rumah Tangga</option>
+              <option value="Ibu & Anak">Ibu & Anak</option>
+              <option value="Olahraga & Outdoor">Olahraga & Outdoor</option>
+              <option value="Otomotif">Otomotif</option>
+              <option value="Hobi & Alat Tulis">Hobi & Alat Tulis</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
           </div>
           <div>
-            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">Satuan *</label>
-            <input
-              id="formSatuan"
-              type="text"
-              placeholder="Pcs / Dus / Karung 5Kg"
-              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-500"
-            />
+            <label for="formSubKategori" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Sub-Kategori</label>
+            <select
+              id="formSubKategori"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            >
+              <option value="">-- Tanpa Sub Kategori --</option>
+            </select>
           </div>
           <div>
-            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">Total Stok *</label>
+            <label for="formTotalStok" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Stok Produk *</label>
             <input
               id="formTotalStok"
               type="number"
               min="0"
               step="1"
-              placeholder="Contoh: 100"
-              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-extrabold focus:outline-none focus:ring-2 focus:ring-teal-500"
+              value="50"
+              placeholder="50"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
             />
           </div>
         </div>
 
-        <!-- Baris 3: Harga dari Mitra (Modal) & Harga Jual dari Mitra -->
-        <div class="p-4 rounded-2xl bg-teal-50/60 dark:bg-teal-950/30 border border-teal-200/80 dark:border-teal-800/60 space-y-3">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-extrabold uppercase tracking-wider text-teal-800 dark:text-teal-300 flex items-center gap-1.5">
-              <i class="fa-solid fa-money-bill-transfer"></i>
-              Informasi Harga Mitra & Harga Jual
-            </span>
-            <span id="formMarginPreview" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300">
-              Margin: Rp 0 (0%)
-            </span>
+        <!-- Baris 3: Harga Modal Supplier (Rp), Harga Coret / Asli (Rp), Harga Jual Diskon (Rp) * -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label for="formHargaSupplier" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Harga Modal Supplier (Rp)</label>
+            <input
+              id="formHargaSupplier"
+              type="number"
+              min="0"
+              step="100"
+              oninput="updateFormMarginPreview()"
+              placeholder="65000"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            />
           </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Harga dari Mitra (Modal/Beli) *
-              </label>
-              <div class="relative">
-                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">Rp</span>
-                <input
-                  id="formHargaSupplier"
-                  type="number"
-                  min="0"
-                  step="100"
-                  oninput="updateFormMarginPreview()"
-                  placeholder="68500"
-                  class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-sm font-extrabold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
-                />
-              </div>
-              <p class="text-[10px] text-slate-500 mt-1">Harga pokok yang diberikan Mitra</p>
+          <div>
+            <label for="formHargaAsli" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Harga Coret / Asli (Rp)</label>
+            <input
+              id="formHargaAsli"
+              type="number"
+              min="0"
+              step="100"
+              placeholder="250000"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            />
+          </div>
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label for="formHargaJualSupplier" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Harga Jual Diskon (Rp) *</label>
+              <span id="formMarginPreview" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300">
+                Margin: Rp 0
+              </span>
             </div>
-
-            <div>
-              <label class="block text-xs font-bold text-teal-700 dark:text-teal-300 mb-1">
-                Harga Jual dari Mitra (HET / Rekomendasi) *
-              </label>
-              <div class="relative">
-                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-teal-600">Rp</span>
-                <input
-                  id="formHargaJualSupplier"
-                  type="number"
-                  min="0"
-                  step="100"
-                  oninput="updateFormMarginPreview()"
-                  placeholder="74500"
-                  class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-teal-400 dark:border-teal-700 text-sm font-extrabold text-teal-700 dark:text-teal-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                />
-              </div>
-              <p class="text-[10px] text-slate-500 mt-1">Harga jual pasaran / rekomendasi dari Mitra</p>
-            </div>
+            <input
+              id="formHargaJualSupplier"
+              type="number"
+              min="0"
+              step="100"
+              oninput="updateFormMarginPreview()"
+              placeholder="99000"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            />
           </div>
         </div>
 
-        <!-- Baris 4: Ambil Foto Kamera / Galeri -> Otomatis AI Full Generate (Mode 2) -->
-        <div class="p-4 rounded-2xl bg-slate-100/80 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 space-y-3">
-          <div class="flex items-center justify-between flex-wrap gap-2">
-            <div>
-              <label class="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
-                <i class="fa-solid fa-wand-magic-sparkles text-purple-600"></i>
-                Foto Produk (Kamera / Galeri &rarr; Otomatis AI Full Generate Mode 2)
-              </label>
-              <p class="text-[11px] text-slate-500">
-                Otomatis di-generate dengan prompt Google Flow: <span class="italic text-purple-600 dark:text-purple-400">"Premium product photography, clean studio lighting, realistic shadows..."</span>
-              </p>
-            </div>
-            <span id="aiStudioBadge" class="px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 text-[10px] font-bold">
-              Mode 2: AI Full Generate Aktif
-            </span>
+        <!-- Baris 4: Varian (Pisahkan dengan koma) & Checkbox Tampilkan di Produk Terlaris -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+          <div class="md:col-span-2">
+            <label for="formSatuan" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Varian (Pisahkan dengan koma)</label>
+            <input
+              id="formSatuan"
+              type="text"
+              placeholder="Hitam, Putih, Ukuran L"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            />
+          </div>
+          <div class="pb-2.5 flex items-center">
+            <label for="formIsTerlaris" class="inline-flex items-center gap-2.5 cursor-pointer select-none">
+              <input
+                id="formIsTerlaris"
+                type="checkbox"
+                class="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500 cursor-pointer"
+              />
+              <span class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">Tampilkan di Produk Terlaris</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Baris 5: Foto Produk (URL / Upload / Kamera) -->
+        <div class="space-y-3">
+          <label for="formFotoUrl" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Foto Produk (URL / Upload / Kamera)</label>
+
+          <input
+            id="formFileInput"
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onchange="handleImageFileSelected(event)"
+            class="panel-hidden"
+          />
+
+          <input
+            id="formGalleryInput"
+            type="file"
+            accept="image/*"
+            onchange="handleImageFileSelected(event)"
+            class="panel-hidden"
+          />
+
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+            <input
+              id="formFotoUrl"
+              type="text"
+              oninput="handleDirectUrlInput()"
+              placeholder="Tempel URL gambar atau gunakan tombol Upload / Kamera..."
+              class="flex-1 px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            />
+
+            <button
+              type="button"
+              onclick="triggerGalleryPicker()"
+              class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition cursor-pointer shrink-0"
+            >
+              <i class="fa-solid fa-upload"></i>
+              <span>Upload File</span>
+            </button>
+
+            <button
+              type="button"
+              onclick="startDirectCamera()"
+              class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition cursor-pointer shrink-0"
+            >
+              <i class="fa-solid fa-camera"></i>
+              <span>Buka Kamera</span>
+            </button>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-center">
-            <!-- Thumbnail Preview (Dilengkapi Overlay Loading AI) -->
-            <div class="flex flex-col items-center justify-center">
-              <div class="relative w-24 h-24 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 overflow-hidden flex items-center justify-center shadow-sm">
-                <img
-                  id="formImagePreview"
-                  src="https://placehold.co/200x200/0f766e/ffffff?text=Preview"
-                  referrerpolicy="no-referrer"
-                  alt="Preview Produk"
-                  class="w-full h-full object-cover"
-                />
-                <div id="aiGeneratingOverlay" class="panel-hidden absolute inset-0 bg-slate-950/80 backdrop-blur-[2px] flex flex-col items-center justify-center text-white p-1.5 text-center">
-                  <i class="fa-solid fa-wand-magic-sparkles fa-spin text-purple-400 text-lg mb-1"></i>
-                  <span id="aiGeneratingStepText" class="text-[9px] font-extrabold leading-tight text-purple-200">AI Full Generate Studio...</span>
-                </div>
-                <span id="compressionBadge" class="panel-hidden absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-slate-900/80 text-white text-[9px] font-bold"></span>
+          <!-- Layar Live Viewfinder Kamera Langsung -->
+          <div id="liveCameraContainer" class="panel-hidden p-3 rounded-2xl bg-slate-900 text-white space-y-2.5 border border-teal-500/40">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold text-teal-300 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+                Kamera Aktif — Arahkan ke Produk
+              </span>
+              <div class="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onclick="switchCameraFacingMode()"
+                  class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] font-bold text-slate-200 flex items-center gap-1 cursor-pointer"
+                  title="Ganti Kamera Depan / Belakang"
+                >
+                  <i class="fa-solid fa-camera-rotate"></i>
+                  <span>Putar Kamera</span>
+                </button>
+                <button
+                  type="button"
+                  onclick="stopDirectCamera()"
+                  class="px-2 py-1 rounded-lg bg-rose-600/80 hover:bg-rose-600 text-[10px] font-bold text-white cursor-pointer"
+                >
+                  Tutup
+                </button>
               </div>
+            </div>
 
-              <!-- Tombol Pilihan Mode 2 (AI Full Generate) vs Foto Asli -->
-              <div id="aiPhotoSwitchWrap" class="panel-hidden mt-2 flex flex-wrap items-center justify-center gap-1">
+            <div class="relative w-full h-48 sm:h-56 rounded-xl overflow-hidden bg-black flex items-center justify-center">
+              <video id="liveCameraVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
+            </div>
+
+            <button
+              type="button"
+              onclick="capturePhotoFromLiveCamera()"
+              class="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg cursor-pointer"
+            >
+              <i class="fa-solid fa-wand-magic-sparkles"></i>
+              <span>Jepret & Generate AI Studio (Mode 2)</span>
+            </button>
+          </div>
+
+          <!-- Box Preview & AI Studio (Tampil saat ada foto / proses AI) -->
+          <div id="photoPreviewBox" class="panel-hidden p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 flex flex-col sm:flex-row items-center gap-3">
+            <div class="relative w-20 h-20 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 overflow-hidden flex items-center justify-center shrink-0">
+              <img
+                id="formImagePreview"
+                src="https://placehold.co/200x200/0f766e/ffffff?text=Preview"
+                referrerpolicy="no-referrer"
+                alt="Preview Produk"
+                class="w-full h-full object-cover"
+              />
+              <div id="aiGeneratingOverlay" class="panel-hidden absolute inset-0 bg-slate-950/80 backdrop-blur-[2px] flex flex-col items-center justify-center text-white p-1.5 text-center">
+                <i class="fa-solid fa-wand-magic-sparkles fa-spin text-purple-400 text-base mb-1"></i>
+                <span id="aiGeneratingStepText" class="text-[8px] font-extrabold leading-tight text-purple-200">AI Studio...</span>
+              </div>
+              <span id="compressionBadge" class="panel-hidden absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-slate-900/80 text-white text-[9px] font-bold"></span>
+            </div>
+
+            <div class="flex-1 space-y-1.5 text-center sm:text-left">
+              <div id="aiPhotoSwitchWrap" class="panel-hidden flex flex-wrap items-center justify-center sm:justify-start gap-1.5">
                 <button
                   id="btnUseAiFullGen"
                   type="button"
                   onclick="selectPhotoVariant('fullgen')"
-                  class="px-2 py-1 rounded-md text-[9px] font-extrabold bg-purple-600 text-white shadow-sm cursor-pointer transition"
-                  title="Mode 2: AI Full Generate dengan Google Flow Studio Prompt"
+                  class="px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-purple-600 text-white shadow-sm cursor-pointer transition"
                 >
                   <i class="fa-solid fa-wand-magic-sparkles mr-0.5"></i>AI Full Generate
                 </button>
@@ -747,8 +833,7 @@
                   id="btnRegenerateAiFullGen"
                   type="button"
                   onclick="regenerateAiFullPhoto()"
-                  class="px-2 py-1 rounded-md text-[9px] font-bold bg-amber-500 text-slate-950 hover:bg-amber-400 shadow-sm cursor-pointer transition"
-                  title="Generate variasi baru dengan AI Studio"
+                  class="px-2.5 py-1 rounded-md text-[10px] font-bold bg-amber-500 text-slate-950 hover:bg-amber-400 shadow-sm cursor-pointer transition"
                 >
                   <i class="fa-solid fa-rotate mr-0.5"></i>Variasi Baru
                 </button>
@@ -756,137 +841,49 @@
                   id="btnUseRawPhoto"
                   type="button"
                   onclick="selectPhotoVariant('raw')"
-                  class="px-2 py-1 rounded-md text-[9px] font-bold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 cursor-pointer transition"
-                  title="Gunakan foto mentah asli dari kamera/galeri"
+                  class="px-2.5 py-1 rounded-md text-[10px] font-bold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 cursor-pointer transition"
                 >
                   Foto Asli
                 </button>
               </div>
-            </div>
-
-            <div class="sm:col-span-3 space-y-2.5">
-              <input
-                id="formFileInput"
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onchange="handleImageFileSelected(event)"
-                class="panel-hidden"
-              />
-
-              <input
-                id="formGalleryInput"
-                type="file"
-                accept="image/*"
-                onchange="handleImageFileSelected(event)"
-                class="panel-hidden"
-              />
-
-              <!-- Tombol Buka Kamera Langsung & Pilih dari Galeri -->
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onclick="startDirectCamera()"
-                  class="w-full py-2.5 px-3.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-teal-600/20 transition cursor-pointer"
-                >
-                  <i class="fa-solid fa-camera text-sm"></i>
-                  <span>Buka Kamera Langsung</span>
-                </button>
-
-                <button
-                  type="button"
-                  onclick="triggerGalleryPicker()"
-                  class="w-full py-2.5 px-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-indigo-600/20 transition cursor-pointer"
-                >
-                  <i class="fa-regular fa-images text-sm"></i>
-                  <span>Pilih dari Galeri</span>
-                </button>
-              </div>
-
-              <!-- Layar Live Viewfinder Kamera Langsung -->
-              <div id="liveCameraContainer" class="panel-hidden p-3 rounded-2xl bg-slate-900 text-white space-y-2.5 border border-teal-500/40">
-                <div class="flex items-center justify-between">
-                  <span class="text-[11px] font-bold text-teal-300 flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
-                    Kamera Aktif — Arahkan ke Produk
-                  </span>
-                  <div class="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onclick="switchCameraFacingMode()"
-                      class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] font-bold text-slate-200 flex items-center gap-1 cursor-pointer"
-                      title="Ganti Kamera Depan / Belakang"
-                    >
-                      <i class="fa-solid fa-camera-rotate"></i>
-                      <span>Putar Kamera</span>
-                    </button>
-                    <button
-                      type="button"
-                      onclick="stopDirectCamera()"
-                      class="px-2 py-1 rounded-lg bg-rose-600/80 hover:bg-rose-600 text-[10px] font-bold text-white cursor-pointer"
-                    >
-                      Tutup
-                    </button>
-                  </div>
-                </div>
-
-                <div class="relative w-full h-48 sm:h-56 rounded-xl overflow-hidden bg-black flex items-center justify-center">
-                  <video id="liveCameraVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
-                </div>
-
-                <button
-                  type="button"
-                  onclick="capturePhotoFromLiveCamera()"
-                  class="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg cursor-pointer"
-                >
-                  <i class="fa-solid fa-wand-magic-sparkles"></i>
-                  <span>Jepret & Generate AI Studio (Mode 2)</span>
-                </button>
-              </div>
-
-              <div class="relative">
-                <input
-                  id="formFotoUrl"
-                  type="text"
-                  oninput="handleDirectUrlInput()"
-                  placeholder="Atau tempel link Google Drive / File ID di sini..."
-                  class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-teal-500"
-                />
-              </div>
               <p id="aiStatusNote" class="text-[11px] text-slate-500 leading-tight">
-                Saat foto diambil dari kamera atau dipilih dari galeri, sistem otomatis menjalankan <strong>Mode 2 (AI Full Generate)</strong> dengan prompt Google Flow Studio.
+                Foto produk siap disimpan & dikonversi ke link anti-blokir <code class="font-mono">lh3.googleusercontent.com</code>.
               </p>
             </div>
           </div>
         </div>
 
-        <!-- Baris 5: Catatan -->
+        <!-- Baris 6: Deskripsi Produk -->
         <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">Catatan Keterangan / Minimal Order</label>
+          <label for="formCatatan" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Deskripsi Produk</label>
           <textarea
             id="formCatatan"
-            rows="2"
-            placeholder="Contoh: Harga grosir minimal pengambilan 5 dus..."
-            class="w-full px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+            rows="3"
+            placeholder="Tulis spesifikasi dan keunggulan produk..."
+            class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
           ></textarea>
         </div>
 
-        <div class="pt-2 flex items-center justify-end gap-2.5 border-t border-slate-200 dark:border-slate-800">
-          <button
-            type="button"
-            onclick="closeProductModal()"
-            class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 cursor-pointer"
-          >
-            Batal
-          </button>
+        <!-- Baris 7: Tombol Aksi Bawah Sesuai Gambar -->
+        <div class="pt-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           <button
             id="btnSaveProduct"
             type="button"
             onclick="submitProductForm()"
-            class="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs sm:text-sm font-bold shadow-lg shadow-teal-600/25 flex items-center gap-2 cursor-pointer"
+            class="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-extrabold shadow-md shadow-blue-600/20 flex items-center justify-center gap-2 cursor-pointer transition"
           >
-            <i class="fa-solid fa-cloud-arrow-up"></i>
-            <span>Simpan & Sinkronkan ke Drive</span>
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span>Simpan Produk ke Database</span>
+          </button>
+
+          <button
+            id="btnClearDummyProducts"
+            type="button"
+            onclick="handleClearDummyProducts()"
+            class="px-4 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 cursor-pointer transition"
+          >
+            <i class="fa-solid fa-paintbrush"></i>
+            <span>Bersihkan Produk Contoh (Dummy)</span>
           </button>
         </div>
       </div>
@@ -912,7 +909,7 @@
         <input type="hidden" id="quickIdProduk" />
 
         <div>
-          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Harga dari Mitra (Modal) Baru *</label>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Harga Modal Supplier (Rp)</label>
           <div class="relative">
             <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">Rp</span>
             <input
@@ -926,7 +923,21 @@
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-teal-700 dark:text-teal-400 mb-1">Harga Jual dari Mitra Baru *</label>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Harga Coret / Asli (Rp)</label>
+          <div class="relative">
+            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">Rp</span>
+            <input
+              id="quickHargaAsli"
+              type="number"
+              min="0"
+              step="100"
+              class="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-base font-extrabold"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-teal-700 dark:text-teal-400 mb-1">Harga Jual Diskon (Rp) *</label>
           <div class="relative">
             <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-teal-600">Rp</span>
             <input
@@ -940,7 +951,7 @@
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Total Stok Tersedia *</label>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Stok Produk *</label>
           <input
             id="quickTotalStok"
             type="number"
@@ -1347,6 +1358,49 @@
       supplierFolderUrl: '',
       hasGeminiKey: false
     };
+
+    const CATEGORY_SUBCATEGORY_MAP = {
+      'Elektronik': ['Audio & TWS', 'Aksesoris HP & Tablet', 'Kamera & Fotografi', 'Komputer & Laptop', 'Smartwatch & Wearable', 'Elektronik Rumah Tangga'],
+      'Sembako': ['Beras & Biji-bijian', 'Minyak Goreng', 'Gula, Teh & Kopi', 'Bumbu & Bahan Masakan', 'Mie & Makanan Instan', 'Susu & Olahan'],
+      'Makanan & Minuman': ['Makanan Ringan & Snack', 'Minuman Kemasan', 'Kuliner Siap Saji', 'Bahan Kue', 'Frozen Food'],
+      'Fashion Pria': ['Kaos & Polo Pria', 'Kemeja & Batik Pria', 'Celana Pria', 'Jaket & Hoodie', 'Sepatu & Sandal Pria', 'Aksesoris Pria'],
+      'Fashion Wanita': ['Pakaian Wanita', 'Busana Muslim & Hijab', 'Tas Wanita', 'Sepatu & Sandal Wanita', 'Aksesoris & Perhiasan'],
+      'Kesehatan & Kecantikan': ['Skincare & Wajah', 'Makeup & Kosmetik', 'Perawatan Tubuh & Rambut', 'Parfum', 'Vitamin & Suplemen', 'Obat & Alat Kesehatan'],
+      'Rumah Tangga': ['Perlengkapan Dapur', 'Alat Kebersihan', 'Dekorasi Rumah', 'Tempat Penyimpanan', 'Kamar Tidur & Mandi'],
+      'Ibu & Anak': ['Perlengkapan Bayi', 'Pakaian Bayi & Anak', 'Mainan & Edukasi', 'Susu & Makanan Bayi'],
+      'Olahraga & Outdoor': ['Pakaian & Sepatu Olahraga', 'Alat Fitness', 'Camping & Outdoor', 'Sepeda & Aksesoris'],
+      'Otomotif': ['Aksesoris Motor', 'Aksesoris Mobil', 'Oli & Perawatan', 'Helm & Riding Gear'],
+      'Hobi & Alat Tulis': ['Buku & ATK', 'Kerajinan & Seni', 'Koleksi & Souvenir'],
+      'Lainnya': ['Produk Umum', 'Paket Bundling']
+    };
+
+    function handleKategoriUtamaChange(selectedKategori, presetSubKategori) {
+      const katSelect = document.getElementById('formKategori');
+      const subSelect = document.getElementById('formSubKategori');
+      if (!subSelect) return;
+
+      const mainKat = selectedKategori !== undefined ? selectedKategori : (katSelect ? katSelect.value : 'Elektronik');
+      if (katSelect && mainKat && !Array.from(katSelect.options).some(function (o) { return o.value === mainKat; })) {
+        const customOpt = document.createElement('option');
+        customOpt.value = mainKat;
+        customOpt.textContent = mainKat;
+        katSelect.appendChild(customOpt);
+      }
+      if (katSelect && mainKat) {
+        katSelect.value = mainKat;
+      }
+
+      const subList = CATEGORY_SUBCATEGORY_MAP[mainKat] || [];
+      let html = '<option value="">-- Tanpa Sub Kategori --</option>';
+      subList.forEach(function (sub) {
+        html += '<option value="' + escapeHtml(sub) + '">' + escapeHtml(sub) + '</option>';
+      });
+      if (presetSubKategori && subList.indexOf(presetSubKategori) === -1) {
+        html += '<option value="' + escapeHtml(presetSubKategori) + '">' + escapeHtml(presetSubKategori) + '</option>';
+      }
+      subSelect.innerHTML = html;
+      subSelect.value = presetSubKategori || '';
+    }
 
     function isNativeGasEnvironment() {
       return (
@@ -1765,7 +1819,6 @@
       const roleBadge = document.getElementById('headerRoleBadge');
       const btnManageSup = document.getElementById('btnManageSuppliers');
       const filterSup = document.getElementById('filterSupplier');
-      const adminOwnerWrap = document.getElementById('adminSupplierSelectWrap');
       const adminSyncBanner = document.getElementById('adminSyncBanner');
       const adminKpiSection = document.getElementById('adminKpiSection');
 
@@ -1775,7 +1828,6 @@
         btnManageSup.classList.remove('panel-hidden');
         btnManageSup.classList.add('flex');
         filterSup.classList.remove('panel-hidden');
-        adminOwnerWrap.classList.remove('panel-hidden');
         if (adminSyncBanner) adminSyncBanner.classList.remove('panel-hidden');
         if (adminKpiSection) adminKpiSection.classList.remove('panel-hidden');
       } else {
@@ -1784,7 +1836,6 @@
         btnManageSup.classList.add('panel-hidden');
         btnManageSup.classList.remove('flex');
         filterSup.classList.add('panel-hidden');
-        adminOwnerWrap.classList.add('panel-hidden');
         if (adminSyncBanner) adminSyncBanner.classList.add('panel-hidden');
         if (adminKpiSection) adminKpiSection.classList.add('panel-hidden');
       }
@@ -1882,12 +1933,13 @@
     }
 
     function populateAdminSupplierDropdowns() {
-      if (!currentUser || String(currentUser.role).toLowerCase() !== 'admin') return;
+      if (!currentUser) return;
+      const isAdmin = String(currentUser.role).toLowerCase() === 'admin';
       const filterSelect = document.getElementById('filterSupplier');
       const ownerSelect = document.getElementById('formSupplierOwner');
       const currentFilterVal = filterSelect ? filterSelect.value : 'ALL';
 
-      if (filterSelect) {
+      if (isAdmin && filterSelect) {
         let filterHtml = '<option value="ALL">Semua Mitra (Mode Admin)</option>';
         allSuppliers.forEach(function (s) {
           if (String(s.role).toLowerCase() !== 'admin') {
@@ -1906,20 +1958,36 @@
       }
 
       if (ownerSelect) {
-        let ownerHtml = '';
-        allSuppliers.forEach(function (s) {
-          ownerHtml +=
+        if (isAdmin) {
+          ownerSelect.disabled = false;
+          let ownerHtml = '<option value="" data-name="Tanpa Supplier">-- Tanpa Supplier --</option>';
+          allSuppliers.forEach(function (s) {
+            if (String(s.role).toLowerCase() !== 'admin') {
+              ownerHtml +=
+                '<option value="' +
+                escapeHtml(s.id_supplier) +
+                '" data-name="' +
+                escapeHtml(s.nama_supplier) +
+                '">' +
+                escapeHtml(s.nama_supplier) +
+                ' (' +
+                escapeHtml(s.id_supplier) +
+                ')</option>';
+            }
+          });
+          ownerSelect.innerHTML = ownerHtml;
+        } else {
+          ownerSelect.innerHTML =
             '<option value="' +
-            escapeHtml(s.id_supplier) +
+            escapeHtml(currentUser.id_supplier) +
             '" data-name="' +
-            escapeHtml(s.nama_supplier) +
+            escapeHtml(currentUser.nama_supplier) +
             '">' +
-            escapeHtml(s.nama_supplier) +
-            ' (' +
-            escapeHtml(s.id_supplier) +
-            ')</option>';
-        });
-        ownerSelect.innerHTML = ownerHtml;
+            escapeHtml(currentUser.nama_supplier) +
+            '</option>';
+          ownerSelect.value = currentUser.id_supplier;
+          ownerSelect.disabled = true;
+        }
       }
     }
 
@@ -2324,10 +2392,12 @@
       const safePhotoUrl = convertDriveToLh3Client(p.foto_url) || 'https://placehold.co/200x200/0f766e/ffffff?text=Produk';
       const hargaModal = Number(p.harga_supplier || 0);
       const hargaJual = Number(p.harga_jual_supplier || 0);
+      const hargaAsli = Number(p.harga_asli || p.harga_jual_lama || hargaJual);
       const marginRp = hargaJual - hargaModal;
       const marginPct = hargaModal > 0 ? ((marginRp / hargaModal) * 100).toFixed(1) : '0.0';
       const isLh3 = safePhotoUrl.indexOf('lh3.googleusercontent.com') !== -1;
       const isApproved = String(p.status_approval || 'Pending').toLowerCase() === 'approved';
+      const isTerlaris = Boolean(p.is_terlaris);
 
       return (
         '<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col">' +
@@ -2343,13 +2413,14 @@
                 '<div class="min-w-0 flex-1">' +
                   '<div class="flex flex-wrap items-center gap-1.5 mb-1">' +
                     '<span class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[10px] font-bold">' + escapeHtml(p.kategori || 'Umum') + '</span>' +
+                    (isTerlaris ? '<span class="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-400/40 text-[10px] font-extrabold"><i class="fa-solid fa-fire text-amber-500 mr-1"></i>Terlaris</span>' : '') +
                     getStockBadgeHtml(p.total_stok, p.satuan) +
                     (isLh3 ? '<span class="px-1.5 py-0.5 rounded bg-teal-500/15 text-teal-700 dark:text-teal-300 text-[9px] font-mono font-bold"><i class="fa-brands fa-google-drive mr-0.5"></i>lh3</span>' : '') +
                   '</div>' +
                   '<h4 class="font-extrabold text-sm text-slate-900 dark:text-white leading-snug line-clamp-2">' + escapeHtml(p.nama_produk) + '</h4>' +
                   '<div class="flex items-center gap-2 mt-0.5 text-[11px] text-slate-400 font-mono">' +
-                    '<span>SKU: ' + escapeHtml(p.kode_sku || '-') + '</span>' +
-                    (isAdmin ? '<span class="text-amber-600 dark:text-amber-400 font-sans font-bold">• ' + escapeHtml(p.nama_supplier) + '</span>' : '') +
+                    '<span>ID: ' + escapeHtml(p.id_produk || '-') + '</span>' +
+                    (isAdmin ? '<span class="text-amber-600 dark:text-amber-400 font-sans font-bold">• ' + escapeHtml(p.nama_supplier || 'Tanpa Supplier') + '</span>' : '') +
                   '</div>' +
                   '<div class="mt-1.5 flex flex-wrap items-center gap-1.5">' +
                     getApprovalBadgeHtml(p.status_approval, p.hibualamo_url) +
@@ -2360,17 +2431,19 @@
               '<div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3 border border-slate-200/70 dark:border-slate-800 space-y-2">' +
                 '<div class="flex items-baseline justify-between gap-2">' +
                   '<div>' +
-                    '<span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Harga Mitra (Modal)</span>' +
+                    '<span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Harga Modal Supplier</span>' +
                     '<span class="text-sm sm:text-base font-extrabold text-slate-800 dark:text-slate-100">' + formatRupiah(hargaModal) + '</span>' +
                   '</div>' +
                   '<div class="text-right">' +
-                    getPriceTrendBadge(hargaModal, p.harga_supplier_lama) +
+                    (hargaAsli > hargaJual
+                      ? '<span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Harga Coret / Asli</span><span class="text-xs font-bold text-slate-400 line-through">' + formatRupiah(hargaAsli) + '</span>'
+                      : getPriceTrendBadge(hargaModal, p.harga_supplier_lama)) +
                   '</div>' +
                 '</div>' +
 
                 '<div class="border-t border-slate-200/70 dark:border-slate-700/70 pt-2 flex items-baseline justify-between gap-2">' +
                   '<div>' +
-                    '<span class="text-[10px] font-extrabold uppercase tracking-wider text-teal-600 dark:text-teal-400 block">Harga Jual Mitra</span>' +
+                    '<span class="text-[10px] font-extrabold uppercase tracking-wider text-teal-600 dark:text-teal-400 block">Harga Jual Diskon</span>' +
                     '<span class="text-base sm:text-lg font-extrabold text-teal-700 dark:text-teal-300">' + formatRupiah(hargaJual) + '</span>' +
                   '</div>' +
                   '<div class="text-right">' +
@@ -2390,7 +2463,7 @@
                   '</div>'
                 : '') +
 
-              (p.catatan ? '<p class="text-[11px] text-slate-500 dark:text-slate-400 italic line-clamp-2"><i class="fa-regular fa-comment-dots mr-1"></i>' + escapeHtml(p.catatan) + '</p>' : '') +
+              (p.catatan ? '<p class="text-[11px] text-slate-500 dark:text-slate-400 italic line-clamp-2"><i class="fa-regular fa-file-lines mr-1"></i>' + escapeHtml(p.catatan) + '</p>' : '') +
             '</div>' +
 
             '<div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2">' +
@@ -2661,6 +2734,7 @@
       compressedBase64Image = rawDataUrl;
       compressedMimeType = 'image/jpeg';
 
+      const previewBox = document.getElementById('photoPreviewBox');
       const previewEl = document.getElementById('formImagePreview');
       const overlayEl = document.getElementById('aiGeneratingOverlay');
       const stepTextEl = document.getElementById('aiGeneratingStepText');
@@ -2668,6 +2742,7 @@
       const switchWrap = document.getElementById('aiPhotoSwitchWrap');
       const noteEl = document.getElementById('aiStatusNote');
 
+      if (previewBox) previewBox.classList.remove('panel-hidden');
       if (previewEl) previewEl.src = rawDataUrl;
       if (overlayEl) overlayEl.classList.remove('panel-hidden');
       if (stepTextEl) stepTextEl.textContent = 'Mode 2: AI Full Generate...';
@@ -2794,6 +2869,7 @@
       const fileInputEl = document.getElementById('formFileInput');
       const galleryInputEl = document.getElementById('formGalleryInput');
       const badgeEl = document.getElementById('compressionBadge');
+      const previewBox = document.getElementById('photoPreviewBox');
       const previewEl = document.getElementById('formImagePreview');
       const overlayEl = document.getElementById('aiGeneratingOverlay');
       const switchWrap = document.getElementById('aiPhotoSwitchWrap');
@@ -2806,8 +2882,10 @@
       if (switchWrap) switchWrap.classList.add('panel-hidden');
       if (noteEl) {
         noteEl.innerHTML =
-          'Saat foto diambil dari kamera atau dipilih dari galeri, sistem otomatis menjalankan <strong>Mode 2 (AI Full Generate)</strong> dengan prompt Google Flow Studio.';
+          'Foto produk siap disimpan & dikonversi ke link anti-blokir <code class="font-mono">lh3.googleusercontent.com</code>.';
       }
+
+      populateAdminSupplierDropdowns();
 
       if (idProduk) {
         const prod = allProducts.find(function (x) {
@@ -2815,39 +2893,67 @@
         });
         if (!prod) return;
 
+        let rawKat = String(prod.kategori || 'Elektronik').trim();
+        let mainKat = rawKat;
+        let subKat = String(prod.sub_kategori || '').trim();
+        if (!subKat && rawKat.indexOf(' - ') !== -1) {
+          const parts = rawKat.split(' - ');
+          mainKat = parts[0].trim();
+          subKat = parts.slice(1).join(' - ').trim();
+        }
+        handleKategoriUtamaChange(mainKat, subKat);
+
         document.getElementById('productModalTitle').textContent = 'Edit Produk — ' + prod.nama_produk;
         document.getElementById('formIdProduk').value = prod.id_produk;
         document.getElementById('formNamaProduk').value = prod.nama_produk || '';
         document.getElementById('formKodeSku').value = prod.kode_sku || '';
-        document.getElementById('formKategori').value = prod.kategori || 'Sembako';
-        document.getElementById('formSatuan').value = prod.satuan || 'Pcs';
-        document.getElementById('formTotalStok').value = prod.total_stok !== undefined ? prod.total_stok : 0;
+        document.getElementById('formSatuan').value = prod.satuan || '';
+        document.getElementById('formTotalStok').value = prod.total_stok !== undefined ? prod.total_stok : 50;
         document.getElementById('formHargaSupplier').value = prod.harga_supplier || '';
+        document.getElementById('formHargaAsli').value = prod.harga_asli || prod.harga_jual_lama || '';
         document.getElementById('formHargaJualSupplier').value = prod.harga_jual_supplier || '';
+        document.getElementById('formIsTerlaris').checked = Boolean(prod.is_terlaris);
         document.getElementById('formFotoUrl').value = prod.foto_url || '';
         document.getElementById('formCatatan').value = prod.catatan || '';
-        if (previewEl) {
-          previewEl.src =
-            convertDriveToLh3Client(prod.foto_url) || 'https://placehold.co/200x200/0f766e/ffffff?text=Preview';
+
+        if (prod.foto_url) {
+          if (previewBox) previewBox.classList.remove('panel-hidden');
+          if (previewEl) {
+            previewEl.src =
+              convertDriveToLh3Client(prod.foto_url) || 'https://placehold.co/200x200/0f766e/ffffff?text=Preview';
+          }
+        } else if (previewBox) {
+          previewBox.classList.add('panel-hidden');
         }
 
         if (currentUser && String(currentUser.role).toLowerCase() === 'admin') {
-          document.getElementById('formSupplierOwner').value = prod.id_supplier;
+          const supSelect = document.getElementById('formSupplierOwner');
+          if (supSelect) {
+            supSelect.value = prod.id_supplier && prod.id_supplier !== 'TANPA_SUPPLIER' ? prod.id_supplier : '';
+          }
         }
       } else {
-        document.getElementById('productModalTitle').textContent = 'Tambah Produk Mitra Baru';
+        handleKategoriUtamaChange('Elektronik', '');
+        document.getElementById('productModalTitle').textContent = 'Tambah Produk Baru ke Database';
         document.getElementById('formIdProduk').value = '';
         document.getElementById('formNamaProduk').value = '';
         document.getElementById('formKodeSku').value = '';
-        document.getElementById('formKategori').value = '';
-        document.getElementById('formSatuan').value = 'Pcs';
+        document.getElementById('formSatuan').value = '';
         document.getElementById('formTotalStok').value = '50';
         document.getElementById('formHargaSupplier').value = '';
+        document.getElementById('formHargaAsli').value = '';
         document.getElementById('formHargaJualSupplier').value = '';
+        document.getElementById('formIsTerlaris').checked = false;
         document.getElementById('formFotoUrl').value = '';
         document.getElementById('formCatatan').value = '';
+
+        if (previewBox) previewBox.classList.add('panel-hidden');
         if (previewEl) {
           previewEl.src = 'https://placehold.co/200x200/0f766e/ffffff?text=Preview';
+        }
+        if (currentUser && String(currentUser.role).toLowerCase() === 'admin') {
+          const supSelect = document.getElementById('formSupplierOwner');
+          if (supSelect) supSelect.value = '';
         }
       }
 
@@ -2866,12 +2972,27 @@
       const diff = jual - modal;
       const pct = modal > 0 ? ((diff / modal) * 100).toFixed(1) : '0.0';
       const badge = document.getElementById('formMarginPreview');
+      if (!badge) return;
 
       badge.textContent = 'Margin: ' + formatRupiah(diff) + ' (' + pct + '%)';
       if (diff < 0) {
-        badge.className = 'text-xs font-bold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700';
+        badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700';
       } else {
-        badge.className = 'text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300';
+        badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300';
+      }
+    }
+
+    function handleDirectUrlInput() {
+      const raw = document.getElementById('formFotoUrl').value;
+      const converted = convertDriveToLh3Client(raw);
+      const previewBox = document.getElementById('photoPreviewBox');
+      const previewEl = document.getElementById('formImagePreview');
+      if (converted) {
+        document.getElementById('formFotoUrl').value = converted;
+        if (previewBox) previewBox.classList.remove('panel-hidden');
+        if (previewEl) previewEl.src = converted;
+      } else if (previewBox && !compressedBase64Image) {
+        previewBox.classList.add('panel-hidden');
       }
     }
 
@@ -2921,18 +3042,23 @@
 
     function submitProductForm() {
       const nama = document.getElementById('formNamaProduk').value.trim();
-      const kategori = document.getElementById('formKategori').value.trim() || 'Umum';
-      const satuan = document.getElementById('formSatuan').value.trim() || 'Pcs';
+      const kategoriUtama = document.getElementById('formKategori').value.trim() || 'Elektronik';
+      const subKategori = (document.getElementById('formSubKategori').value || '').trim();
+      const kategoriGabungan = subKategori ? (kategoriUtama + ' - ' + subKategori) : kategoriUtama;
+      const varian = document.getElementById('formSatuan').value.trim();
       const totalStok = Number(document.getElementById('formTotalStok').value || 0);
       const hargaModal = Number(document.getElementById('formHargaSupplier').value || 0);
       const hargaJual = Number(document.getElementById('formHargaJualSupplier').value || 0);
+      const hargaAsliRaw = Number(document.getElementById('formHargaAsli').value || 0);
+      const hargaAsliFinal = hargaAsliRaw > 0 ? hargaAsliRaw : hargaJual;
+      const isTerlaris = Boolean(document.getElementById('formIsTerlaris').checked);
 
       if (!nama) {
-        showToast('Nama produk wajib diisi.', 'error');
+        showToast('Nama Produk wajib diisi (*).', 'error');
         return;
       }
-      if (hargaModal <= 0 || hargaJual <= 0) {
-        showToast('Harga Mitra dan Harga Jual harus lebih dari Rp 0.', 'error');
+      if (hargaJual <= 0) {
+        showToast('Harga Jual Diskon (Rp) wajib diisi dan lebih dari Rp 0 (*).', 'error');
         return;
       }
 
@@ -2940,13 +3066,19 @@
         id_produk: document.getElementById('formIdProduk').value,
         nama_produk: nama,
         kode_sku: document.getElementById('formKodeSku').value.trim(),
-        kategori: kategori,
-        satuan: satuan,
+        kategori: kategoriGabungan,
+        kategori_utama: kategoriUtama,
+        sub_kategori: subKategori,
+        satuan: varian || 'Standar',
+        varian: varian || 'Standar',
         total_stok: totalStok >= 0 ? totalStok : 0,
-        harga_supplier: hargaModal,
+        harga_supplier: hargaModal >= 0 ? hargaModal : 0,
+        harga_asli: hargaAsliFinal,
         harga_jual_supplier: hargaJual,
+        is_terlaris: isTerlaris,
         foto_url: convertDriveToLh3Client(document.getElementById('formFotoUrl').value.trim()),
         catatan: document.getElementById('formCatatan').value.trim(),
+        deskripsi: document.getElementById('formCatatan').value.trim(),
         base64_image: compressedBase64Image,
         mime_type: compressedMimeType,
         file_name: nama.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase() + '_' + Date.now() + '.jpg'
@@ -2954,10 +3086,10 @@
 
       if (currentUser && String(currentUser.role).toLowerCase() === 'admin') {
         const ownerSelect = document.getElementById('formSupplierOwner');
-        if (ownerSelect && ownerSelect.value) {
-          payload.id_supplier = ownerSelect.value;
+        if (ownerSelect) {
+          payload.id_supplier = ownerSelect.value || 'TANPA_SUPPLIER';
           const selectedOpt = ownerSelect.options[ownerSelect.selectedIndex];
-          payload.nama_supplier = selectedOpt ? selectedOpt.getAttribute('data-name') : '';
+          payload.nama_supplier = (selectedOpt && selectedOpt.getAttribute('data-name')) || 'Tanpa Supplier';
         }
       }
 
@@ -2965,26 +3097,59 @@
 
       const btn = document.getElementById('btnSaveProduct');
       btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i><span>Menyimpan ke Google Drive...</span>';
+      btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i><span>Menyimpan Produk ke Database...</span>';
 
       callBackend(
         'saveProductData',
         [payload, currentUser],
         function (res) {
           btn.disabled = false;
-          btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i><span>Simpan & Sinkronkan ke Drive</span>';
+          btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i><span>Simpan Produk ke Database</span>';
           if (res && res.success) {
             closeProductModal();
-            showToast(res.message || 'Produk berhasil disimpan ke Google Drive & Spreadsheet!');
+            showToast(res.message || 'Produk berhasil disimpan ke Database & Google Drive!');
             refreshData();
           } else {
-            showToast((res && res.message) || 'Gagal menyimpan produk ke Google Drive.', 'error');
+            showToast((res && res.message) || 'Gagal menyimpan produk ke Database.', 'error');
           }
         },
         function (err) {
           btn.disabled = false;
-          btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i><span>Simpan & Sinkronkan ke Drive</span>';
-          showToast('Error Server Google Drive: ' + (err.message || err), 'error');
+          btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i><span>Simpan Produk ke Database</span>';
+          showToast('Error Server: ' + (err.message || err), 'error');
+        }
+      );
+    }
+
+    function handleClearDummyProducts() {
+      const btn = document.getElementById('btnClearDummyProducts');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i><span>Membersihkan Produk Dummy...</span>';
+      }
+
+      callBackend(
+        'clearDummyProducts',
+        [currentUser],
+        function (res) {
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-paintbrush"></i><span>Bersihkan Produk Contoh (Dummy)</span>';
+          }
+          if (res && res.success) {
+            showToast(res.message || 'Produk contoh (dummy) berhasil dibersihkan dari database!');
+            closeProductModal();
+            refreshData();
+          } else {
+            showToast((res && res.message) || 'Tidak ada produk contoh yang perlu dibersihkan.', 'warning');
+          }
+        },
+        function (err) {
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-paintbrush"></i><span>Bersihkan Produk Contoh (Dummy)</span>';
+          }
+          showToast('Gagal membersihkan produk dummy: ' + (err.message || err), 'error');
         }
       );
     }
@@ -2998,6 +3163,7 @@
       document.getElementById('quickIdProduk').value = prod.id_produk;
       document.getElementById('quickModalProductName').textContent = prod.nama_produk;
       document.getElementById('quickHargaSupplier').value = prod.harga_supplier || 0;
+      document.getElementById('quickHargaAsli').value = prod.harga_asli || prod.harga_jual_lama || prod.harga_jual_supplier || 0;
       document.getElementById('quickHargaJual').value = prod.harga_jual_supplier || 0;
       document.getElementById('quickTotalStok').value = prod.total_stok !== undefined ? prod.total_stok : 0;
 
@@ -3017,6 +3183,7 @@
 
       const updatedPayload = Object.assign({}, prod, {
         harga_supplier: Number(document.getElementById('quickHargaSupplier').value || 0),
+        harga_asli: Number(document.getElementById('quickHargaAsli').value || 0),
         harga_jual_supplier: Number(document.getElementById('quickHargaJual').value || 0),
         total_stok: Number(document.getElementById('quickTotalStok').value || 0)
       });
@@ -3313,6 +3480,8 @@
     window.renderProducts = renderProducts;
     window.openProductModal = openProductModal;
     window.closeProductModal = closeProductModal;
+    window.handleKategoriUtamaChange = handleKategoriUtamaChange;
+    window.handleClearDummyProducts = handleClearDummyProducts;
     window.updateFormMarginPreview = updateFormMarginPreview;
     window.handleDirectUrlInput = handleDirectUrlInput;
     window.handleImageFileSelected = handleImageFileSelected;
