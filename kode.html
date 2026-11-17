@@ -162,17 +162,35 @@ function ensureDatabaseReady_() {
 }
 
 /**
- * Mengonversi berbagai format link Google Drive / ID menjadi
- * link anti-blokir: https://lh3.googleusercontent.com/d/FILE_ID
+ * Mengonversi satu atau beberapa (dipisahkan koma, maks 5) link Google Drive / ID
+ * menjadi link anti-blokir: https://lh3.googleusercontent.com/d/FILE_ID
  */
-function convertDriveToLh3Url(inputUrlOrId) {
-  if (!inputUrlOrId) return '';
-  const raw = String(inputUrlOrId).trim();
+function convertSingleDriveToLh3Url_(singleUrlOrId) {
+  if (!singleUrlOrId) return '';
+  const raw = String(singleUrlOrId).trim();
+  if (!raw) return '';
   const fileId = extractDriveFileId_(raw);
   if (fileId) {
     return 'https://lh3.googleusercontent.com/d/' + fileId;
   }
   return raw;
+}
+
+function convertDriveToLh3Url(inputUrlOrId) {
+  if (!inputUrlOrId) return '';
+  const raw = String(inputUrlOrId).trim();
+  if (!raw) return '';
+  if (raw.indexOf('data:image/') === 0) return raw;
+
+  const parts = raw
+    .split(',')
+    .map(function (item) {
+      return convertSingleDriveToLh3Url_(item);
+    })
+    .filter(Boolean)
+    .slice(0, 5);
+
+  return parts.join(', ');
 }
 
 function extractDriveFileId_(inputUrlOrId) {
@@ -193,6 +211,21 @@ function extractDriveFileId_(inputUrlOrId) {
   return '';
 }
 
+function extractAllDriveFileIds_(inputUrlOrIdList) {
+  if (!inputUrlOrIdList) return [];
+  const raw = String(inputUrlOrIdList).trim();
+  if (!raw) return [];
+  const parts = raw.split(',');
+  const ids = [];
+  for (let i = 0; i < parts.length; i++) {
+    const fid = extractDriveFileId_(parts[i]);
+    if (fid && ids.indexOf(fid) === -1) {
+      ids.push(fid);
+    }
+  }
+  return ids;
+}
+
 function formatCellDate_(val) {
   if (!val) return '';
   if (Object.prototype.toString.call(val) === '[object Date]') {
@@ -207,9 +240,9 @@ function formatCellDate_(val) {
 
 /**
  * Membuat nama file foto otomatis yang sinkron dengan data produk
- * Format: [SKU]_[Nama_Produk]_Modal-[HargaMitra]_Jual-[HargaJual]_Stok-[TotalStok].jpg
+ * Format: [SKU]_[Nama_Produk]_Modal-[HargaMitra]_Jual-[HargaJual]_Stok-[TotalStok](_FotoX).jpg
  */
-function buildSmartFileName_(payload) {
+function buildSmartFileName_(payload, photoIndex) {
   const cleanSku = String(payload.kode_sku || 'SKU')
     .trim()
     .replace(/[^a-zA-Z0-9_-]/g, '');
@@ -221,8 +254,9 @@ function buildSmartFileName_(payload) {
   const modal = Number(payload.harga_supplier || 0);
   const jual = Number(payload.harga_jual_supplier || 0);
   const stok = Number(payload.total_stok !== undefined ? payload.total_stok : 0);
+  const suffix = photoIndex && photoIndex > 0 ? ('_Foto' + photoIndex) : '';
 
-  return cleanSku + '_' + cleanName + '_Modal-' + modal + '_Jual-' + jual + '_Stok-' + stok + '.jpg';
+  return cleanSku + '_' + cleanName + '_Modal-' + modal + '_Jual-' + jual + '_Stok-' + stok + suffix + '.jpg';
 }
 
 /**
@@ -625,9 +659,10 @@ function getPortalData(sessionUser) {
       }
 
       const normalizedPhoto = convertDriveToLh3Url(r[12]);
-      const extractedFileId = extractDriveFileId_(r[13]) || extractDriveFileId_(r[12]);
-      const directDownloadUrl = extractedFileId
-        ? ('https://drive.google.com/uc?export=download&id=' + extractedFileId)
+      const allFileIds = extractAllDriveFileIds_(r[13] || r[12]);
+      const extractedFileId = allFileIds[0] || '';
+      const directDownloadUrl = allFileIds.length > 0
+        ? allFileIds.map(function (id) { return 'https://drive.google.com/uc?export=download&id=' + id; }).join(', ')
         : normalizedPhoto;
 
       const parsedStock = isNaN(Number(r[11])) ? 0 : Number(r[11]);
@@ -860,27 +895,78 @@ function saveProductData(payload, sessionUser) {
       }
     }
 
-    let fotoUrl = convertDriveToLh3Url(payload.foto_url || '');
-    let driveFileId = extractDriveFileId_(fotoUrl);
-    let driveDownloadCell = driveFileId
-      ? ('https://drive.google.com/uc?export=download&id=' + driveFileId)
-      : '';
+    const MAX_PHOTOS = 5;
+    const finalLh3Urls = [];
+    const finalDownloadUrls = [];
+    const retainedDriveFileIds = [];
+    let hasAnyNewUploadedPhoto = false;
 
-    const smartFileName = buildSmartFileName_(payload);
-    const hasNewUploadedPhoto = Boolean(payload.base64_image && payload.base64_image.length > 50);
+    if (Array.isArray(payload.photo_items) && payload.photo_items.length > 0) {
+      const itemsToProcess = payload.photo_items.slice(0, MAX_PHOTOS);
+      for (let pIdx = 0; pIdx < itemsToProcess.length; pIdx++) {
+        const item = itemsToProcess[pIdx] || {};
+        const itemBase64 = String(item.base64_image || '').trim();
+        const itemUrl = String(item.url || '').trim();
 
-    if (hasNewUploadedPhoto) {
-      const uploaded = uploadImageToSupplierDrive_(
-        payload.base64_image,
-        smartFileName,
-        payload.mime_type || 'image/jpeg',
-        targetSupplierId || 'ADMIN',
-        targetSupplierName || 'Umum'
-      );
-      fotoUrl = uploaded.lh3Url;
-      driveFileId = uploaded.fileId;
-      driveDownloadCell = uploaded.downloadUrl;
+        if (itemBase64 && itemBase64.length > 50) {
+          hasAnyNewUploadedPhoto = true;
+          const slotFileName = buildSmartFileName_(payload, itemsToProcess.length > 1 ? (pIdx + 1) : 0);
+          const uploaded = uploadImageToSupplierDrive_(
+            itemBase64,
+            slotFileName,
+            item.mime_type || payload.mime_type || 'image/jpeg',
+            targetSupplierId || 'ADMIN',
+            targetSupplierName || 'Umum'
+          );
+          finalLh3Urls.push(uploaded.lh3Url);
+          finalDownloadUrls.push(uploaded.downloadUrl);
+          retainedDriveFileIds.push(uploaded.fileId);
+        } else if (itemUrl) {
+          const singleLh3 = convertSingleDriveToLh3Url_(itemUrl);
+          const singleId = extractDriveFileId_(singleLh3);
+          finalLh3Urls.push(singleLh3);
+          if (singleId) {
+            finalDownloadUrls.push('https://drive.google.com/uc?export=download&id=' + singleId);
+            retainedDriveFileIds.push(singleId);
+          } else {
+            finalDownloadUrls.push(singleLh3);
+          }
+        }
+      }
+    } else {
+      const smartFileName = buildSmartFileName_(payload, 0);
+      const hasNewSinglePhoto = Boolean(payload.base64_image && payload.base64_image.length > 50);
+
+      if (hasNewSinglePhoto) {
+        hasAnyNewUploadedPhoto = true;
+        const uploaded = uploadImageToSupplierDrive_(
+          payload.base64_image,
+          smartFileName,
+          payload.mime_type || 'image/jpeg',
+          targetSupplierId || 'ADMIN',
+          targetSupplierName || 'Umum'
+        );
+        finalLh3Urls.push(uploaded.lh3Url);
+        finalDownloadUrls.push(uploaded.downloadUrl);
+        retainedDriveFileIds.push(uploaded.fileId);
+      } else if (payload.foto_url) {
+        const rawUrls = String(payload.foto_url).split(',').map(function (u) { return u.trim(); }).filter(Boolean).slice(0, MAX_PHOTOS);
+        for (let uIdx = 0; uIdx < rawUrls.length; uIdx++) {
+          const singleLh3 = convertSingleDriveToLh3Url_(rawUrls[uIdx]);
+          const singleId = extractDriveFileId_(singleLh3);
+          finalLh3Urls.push(singleLh3);
+          if (singleId) {
+            finalDownloadUrls.push('https://drive.google.com/uc?export=download&id=' + singleId);
+            retainedDriveFileIds.push(singleId);
+          } else {
+            finalDownloadUrls.push(singleLh3);
+          }
+        }
+      }
     }
+
+    let fotoUrl = finalLh3Urls.join(', ');
+    let driveDownloadCell = finalDownloadUrls.join(', ');
 
     const hargaSupplierBaru = Number(payload.harga_supplier || 0);
     const hargaJualBaru = Number(payload.harga_jual_supplier || 0);
@@ -900,14 +986,19 @@ function saveProductData(payload, sessionUser) {
           }
 
           const oldPhotoUrlInSheet = String(row[12] || '');
-          const oldFileIdInSheet = extractDriveFileId_(row[13]) || extractDriveFileId_(oldPhotoUrlInSheet);
+          const oldFileIdsInSheet = extractAllDriveFileIds_(String(row[13] || '') + ',' + oldPhotoUrlInSheet);
 
-          if (hasNewUploadedPhoto && oldFileIdInSheet && oldFileIdInSheet !== driveFileId) {
-            trashOldDriveFile_(oldFileIdInSheet);
+          if (fotoUrl) {
+            for (let oldIdx = 0; oldIdx < oldFileIdsInSheet.length; oldIdx++) {
+              const oldId = oldFileIdsInSheet[oldIdx];
+              if (retainedDriveFileIds.indexOf(oldId) === -1) {
+                trashOldDriveFile_(oldId);
+              }
+            }
           }
 
-          if (!hasNewUploadedPhoto && oldFileIdInSheet) {
-            renameDriveFileIfPossible_(oldFileIdInSheet, smartFileName);
+          if (!hasAnyNewUploadedPhoto && retainedDriveFileIds.length === 1) {
+            renameDriveFileIfPossible_(retainedDriveFileIds[0], buildSmartFileName_(payload, 0));
           }
 
           const hargaSupplierLamaSaatIni = Number(row[7] || 0);
@@ -1425,8 +1516,10 @@ function deleteProductData(idProduk, sessionUser) {
           throw new Error('Akses ditolak: Anda hanya bisa menghapus produk milik Anda sendiri.');
         }
 
-        const photoToTrash = String(data[i][13] || data[i][12] || '');
-        trashOldDriveFile_(photoToTrash);
+        const photosToTrash = extractAllDriveFileIds_(String(data[i][13] || '') + ',' + String(data[i][12] || ''));
+        for (let t = 0; t < photosToTrash.length; t++) {
+          trashOldDriveFile_(photosToTrash[t]);
+        }
 
         try {
           const fakeRejectedRow = data[i].slice();
