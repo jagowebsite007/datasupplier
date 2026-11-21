@@ -658,21 +658,21 @@ function getPortalData(sessionUser) {
         continue;
       }
 
-      const normalizedPhoto = convertDriveToLh3Url(r[12]);
-      const allFileIds = extractAllDriveFileIds_(r[13] || r[12]);
+      const normalizedPhoto = convertDriveToLh3Url(r[13]);
+      const allFileIds = extractAllDriveFileIds_(r[14] || r[13]);
       const extractedFileId = allFileIds[0] || '';
       const directDownloadUrl = allFileIds.length > 0
         ? allFileIds.map(function (id) { return 'https://drive.google.com/uc?export=download&id=' + id; }).join(', ')
         : normalizedPhoto;
 
-      const parsedStock = isNaN(Number(r[11])) ? 0 : Number(r[11]);
-      const rawApproval = String(r[16] || '').trim();
+      const parsedStock = isNaN(Number(r[12])) ? 0 : Number(r[12]);
+      const rawApproval = String(r[17] || '').trim();
       const statusApproval = rawApproval || 'Pending';
-      const approvedAt = formatCellDate_(r[17]);
+      const approvedAt = formatCellDate_(r[18]);
 
-      const hargaJualDiskon = Number(r[8] || 0);
-      const hargaAsliCoret = Number(r[18] || r[10] || hargaJualDiskon);
-      const subKategoriVal = String(r[19] || '');
+      const hargaJualDiskon = Number(r[9] || 0);
+      const hargaAsliCoret = Number(r[19] || r[11] || hargaJualDiskon);
+      const subKategoriVal = String(r[6] || '');
       const isTerlarisVal = String(r[20] || '').toUpperCase() === 'TRUE' || r[20] === true;
 
       products.push({
@@ -683,20 +683,20 @@ function getPortalData(sessionUser) {
         nama_produk: String(r[4] || ''),
         kategori: String(r[5] || 'Elektronik'),
         sub_kategori: subKategoriVal,
-        satuan: String(r[6] || ''),
-        varian: String(r[6] || ''),
-        harga_supplier: Number(r[7] || 0),
+        satuan: String(r[7] || ''),
+        varian: String(r[7] || ''),
+        harga_supplier: Number(r[8] || 0),
         harga_jual_supplier: hargaJualDiskon,
         harga_asli: hargaAsliCoret,
-        harga_supplier_lama: Number(r[9] || 0),
+        harga_supplier_lama: Number(r[10] || 0),
         harga_jual_lama: hargaAsliCoret,
         total_stok: parsedStock,
         foto_url: normalizedPhoto,
         drive_file_id: extractedFileId,
         download_url: directDownloadUrl,
-        catatan: String(r[14] || ''),
-        deskripsi: String(r[14] || ''),
-        updated_at: formatCellDate_(r[15]),
+        catatan: String(r[15] || ''),
+        deskripsi: String(r[15] || ''),
+        updated_at: formatCellDate_(r[16]),
         status_approval: statusApproval,
         approved_at: approvedAt,
         is_terlaris: isTerlarisVal,
@@ -972,7 +972,17 @@ function saveProductData(payload, sessionUser) {
     const hargaJualBaru = Number(payload.harga_jual_supplier || 0);
     const hargaAsliBaru = Number(payload.harga_asli || hargaJualBaru);
     const totalStokBaru = Number(payload.total_stok !== undefined ? payload.total_stok : 50);
-    const subKategoriBaru = String(payload.sub_kategori || '').trim();
+
+    let kategoriUtamaBaru = String(payload.kategori_utama || payload.kategori || 'Elektronik').trim();
+    let subKategoriBaru = String(payload.sub_kategori || '').trim();
+    if (kategoriUtamaBaru.indexOf(' - ') !== -1) {
+      const katParts = kategoriUtamaBaru.split(' - ');
+      kategoriUtamaBaru = katParts[0].trim() || 'Elektronik';
+      if (!subKategoriBaru) {
+        subKategoriBaru = katParts.slice(1).join(' - ').trim();
+      }
+    }
+
     const isTerlarisBaru = Boolean(payload.is_terlaris);
     const varianBaru = String(payload.varian || payload.satuan || '').trim();
     const deskripsiBaru = String(payload.deskripsi !== undefined ? payload.deskripsi : (payload.catatan || '')).trim();
@@ -985,8 +995,8 @@ function saveProductData(payload, sessionUser) {
             throw new Error('Anda tidak memiliki izin untuk mengubah produk milik Mitra lain.');
           }
 
-          const oldPhotoUrlInSheet = String(row[12] || '');
-          const oldFileIdsInSheet = extractAllDriveFileIds_(String(row[13] || '') + ',' + oldPhotoUrlInSheet);
+          const oldPhotoUrlInSheet = String(row[13] || '');
+          const oldFileIdsInSheet = extractAllDriveFileIds_(String(row[14] || '') + ',' + oldPhotoUrlInSheet);
 
           if (fotoUrl) {
             for (let oldIdx = 0; oldIdx < oldFileIdsInSheet.length; oldIdx++) {
@@ -1001,20 +1011,20 @@ function saveProductData(payload, sessionUser) {
             renameDriveFileIfPossible_(retainedDriveFileIds[0], buildSmartFileName_(payload, 0));
           }
 
-          const hargaSupplierLamaSaatIni = Number(row[7] || 0);
+          const hargaSupplierLamaSaatIni = Number(row[8] || 0);
           const historyHargaSupplier = (hargaSupplierBaru !== hargaSupplierLamaSaatIni)
             ? hargaSupplierLamaSaatIni
-            : Number(row[9] || hargaSupplierLamaSaatIni);
+            : Number(row[10] || hargaSupplierLamaSaatIni);
 
           const finalFotoUrl = fotoUrl || oldPhotoUrlInSheet;
-          const finalDownloadUrl = driveDownloadCell || String(row[13] || '');
+          const finalDownloadUrl = driveDownloadCell || String(row[14] || '');
 
-          const currentApproval = String(row[16] || 'Pending').trim();
+          const currentApproval = String(row[17] || 'Pending').trim();
           const nextApprovalStatus = isAdmin
             ? String(payload.status_approval || currentApproval || 'Approved')
             : 'Pending';
           const nextApprovedAt = nextApprovalStatus === 'Approved'
-            ? (formatCellDate_(row[17]) || now)
+            ? (formatCellDate_(row[18]) || now)
             : '';
 
           const updatedSupplierId = isAdmin ? targetSupplierId : String(row[1]);
@@ -1026,7 +1036,8 @@ function saveProductData(payload, sessionUser) {
             updatedSupplierName,
             String(payload.kode_sku || row[3] || ''),
             String(payload.nama_produk || row[4]),
-            String(payload.kategori || row[5] || 'Elektronik'),
+            kategoriUtamaBaru || String(row[5] || 'Elektronik'),
+            subKategoriBaru,
             varianBaru,
             hargaSupplierBaru,
             hargaJualBaru,
@@ -1040,7 +1051,6 @@ function saveProductData(payload, sessionUser) {
             nextApprovalStatus,
             nextApprovedAt,
             hargaAsliBaru,
-            subKategoriBaru,
             isTerlarisBaru
           ];
 
@@ -1087,7 +1097,8 @@ function saveProductData(payload, sessionUser) {
         targetSupplierName,
         String(payload.kode_sku || ('SKU-' + newProductId.slice(-4))),
         String(payload.nama_produk || 'Produk Baru'),
-        String(payload.kategori || 'Elektronik'),
+        kategoriUtamaBaru,
+        subKategoriBaru,
         varianBaru,
         hargaSupplierBaru,
         hargaJualBaru,
@@ -1101,7 +1112,6 @@ function saveProductData(payload, sessionUser) {
         initialApproval,
         initialApprovedAt,
         hargaAsliBaru,
-        subKategoriBaru,
         isTerlarisBaru
       ];
 
@@ -1221,11 +1231,11 @@ function syncProductRowToHibualamoSheet_(productRow) {
   const data = sheet.getDataRange().getValues();
 
   const idProduk = String(productRow[0] || '');
-  const statusApproval = String(productRow[16] || 'Pending').trim();
+  const statusApproval = String(productRow[17] || 'Pending').trim();
 
-  const hargaSupplier = Number(productRow[7] || 0);
-  const hargaJualDiskon = Number(productRow[8] || 0);
-  const hargaAsliInput = Number(productRow[18] || productRow[10] || 0);
+  const hargaSupplier = Number(productRow[8] || 0);
+  const hargaJualDiskon = Number(productRow[9] || 0);
+  const hargaAsliInput = Number(productRow[19] || productRow[11] || 0);
   const hargaAsliFinal = hargaAsliInput > 0 ? hargaAsliInput : hargaJualDiskon;
 
   const isTerlarisFlag =
@@ -1244,26 +1254,26 @@ function syncProductRowToHibualamoSheet_(productRow) {
 
   const terjualVal = (existingRow && existingRow[7] !== '' && existingRow[7] !== undefined) ? existingRow[7] : 0;
   const ratingVal = (existingRow && existingRow[8] !== '' && existingRow[8] !== undefined) ? existingRow[8] : 5.0;
-  const varianVal = String(productRow[6] !== undefined ? productRow[6] : ((existingRow && existingRow[10]) || ''));
+  const varianVal = String(productRow[7] !== undefined ? productRow[7] : ((existingRow && existingRow[10]) || ''));
   const isFlashSaleVal = productRow[20] !== undefined
     ? isTerlarisFlag
     : Boolean(existingRow && existingRow[11]);
   const badgeVal = isFlashSaleVal
     ? 'Terlaris'
     : ((existingRow && existingRow[12] && existingRow[12] !== 'Terlaris') ? existingRow[12] : 'Mitra Resmi');
-  const deskripsiVal = String(productRow[14] !== undefined ? productRow[14] : ((existingRow && existingRow[13]) || ''));
+  const deskripsiVal = String(productRow[15] !== undefined ? productRow[15] : ((existingRow && existingRow[13]) || ''));
 
   const catalogRow = [
     idProduk,                                // 1. ID_Produk
     String(productRow[4] || ''),             // 2. Nama
-    String(productRow[5] || 'Elektronik'),   // 3. Kategori
+    String(productRow[5] || 'Elektronik'),   // 3. Kategori (Kategori Utama)
     hargaSupplier,                           // 4. Harga_Supplier
     hargaAsliFinal,                          // 5. Harga_Asli (Harga Coret / Asli)
     hargaJualDiskon,                         // 6. Harga_Diskon (Harga Jual Diskon)
-    Number(productRow[11] || 0),             // 7. Stok
+    Number(productRow[12] || 0),             // 7. Stok
     terjualVal,                              // 8. Terjual
     ratingVal,                               // 9. Rating
-    convertDriveToLh3Url(productRow[12]),    // 10. URL_Gambar (lh3.googleusercontent.com)
+    convertDriveToLh3Url(productRow[13]),    // 10. URL_Gambar (lh3.googleusercontent.com)
     varianVal,                               // 11. Varian (Pisahkan dengan koma)
     isFlashSaleVal,                          // 12. Is_FlashSale (Tampilkan di Produk Terlaris)
     badgeVal,                                // 13. Badge
@@ -1306,11 +1316,11 @@ function approveProductForHibualamo(idProduk, newStatus, sessionUser) {
     for (let i = 1; i < data.length; i++) {
       if (String(data[i][0]) === String(idProduk)) {
         const approvedTime = cleanStatus.toLowerCase() === 'approved' ? now : '';
-        sheet.getRange(i + 1, 17, 1, 2).setValues([[cleanStatus, approvedTime]]);
+        sheet.getRange(i + 1, 18, 1, 2).setValues([[cleanStatus, approvedTime]]);
 
         const updatedRow = data[i].slice();
-        updatedRow[16] = cleanStatus;
-        updatedRow[17] = approvedTime;
+        updatedRow[17] = cleanStatus;
+        updatedRow[18] = approvedTime;
 
         syncProductRowToHibualamoSheet_(updatedRow);
 
@@ -1360,12 +1370,12 @@ function approveAllPendingForHibualamo(sessionUser) {
 
     for (let i = 1; i < data.length; i++) {
       if (!data[i][0]) continue;
-      const currentStatus = String(data[i][16] || 'Pending').trim();
+      const currentStatus = String(data[i][17] || 'Pending').trim();
       if (currentStatus.toLowerCase() !== 'approved') {
-        sheet.getRange(i + 1, 17, 1, 2).setValues([['Approved', now]]);
+        sheet.getRange(i + 1, 18, 1, 2).setValues([['Approved', now]]);
         const updatedRow = data[i].slice();
-        updatedRow[16] = 'Approved';
-        updatedRow[17] = now;
+        updatedRow[17] = 'Approved';
+        updatedRow[18] = now;
         syncProductRowToHibualamoSheet_(updatedRow);
         approvedCount++;
       }
@@ -1401,12 +1411,12 @@ function getHibualamoApprovedCatalog_() {
     for (let i = 1; i < data.length; i++) {
       const r = data[i];
       if (!r[0]) continue;
-      const statusApproval = String(r[16] || 'Pending').trim();
+      const statusApproval = String(r[17] || 'Pending').trim();
       if (statusApproval.toLowerCase() !== 'approved') continue;
 
-      const hargaSupplier = Number(r[7] || 0);
-      const hargaJualDiskon = Number(r[8] || 0);
-      const hargaAsliInput = Number(r[18] || r[10] || 0);
+      const hargaSupplier = Number(r[8] || 0);
+      const hargaJualDiskon = Number(r[9] || 0);
+      const hargaAsliInput = Number(r[19] || r[11] || 0);
       const hargaAsli = hargaAsliInput > 0 ? hargaAsliInput : hargaJualDiskon;
       const isTerlaris = r[20] === true || String(r[20] || '').toUpperCase() === 'TRUE';
 
@@ -1414,17 +1424,18 @@ function getHibualamoApprovedCatalog_() {
         ID_Produk: String(r[0] || ''),
         Nama: String(r[4] || ''),
         Kategori: String(r[5] || 'Elektronik'),
+        Sub_Kategori: String(r[6] || ''),
         Harga_Supplier: hargaSupplier,
         Harga_Asli: hargaAsli,
         Harga_Diskon: hargaJualDiskon,
-        Stok: Number(r[11] || 0),
+        Stok: Number(r[12] || 0),
         Terjual: 0,
         Rating: 5.0,
-        URL_Gambar: convertDriveToLh3Url(r[12]),
-        Varian: String(r[6] || ''),
+        URL_Gambar: convertDriveToLh3Url(r[13]),
+        Varian: String(r[7] || ''),
         Is_FlashSale: isTerlaris,
         Badge: isTerlaris ? 'Terlaris' : 'Mitra Resmi',
-        Deskripsi: String(r[14] || ''),
+        Deskripsi: String(r[15] || ''),
         ID_Supplier: String(r[1] || ''),
         Nama_Supplier: String(r[2] || '')
       });
@@ -1466,13 +1477,13 @@ function clearDummyProducts(sessionUser) {
     for (let i = data.length - 1; i >= 1; i--) {
       const idProd = String(data[i][0] || '');
       const rowSupId = String(data[i][1] || '');
-      const photoUrl = String(data[i][12] || '');
+      const photoUrl = String(data[i][13] || '');
       const isDummyRow = dummyIds.indexOf(idProd) !== -1 || photoUrl.indexOf('placehold.co') !== -1;
 
       if (isDummyRow && (isAdmin || rowSupId === String(sessionUser.id_supplier))) {
         try {
           const fakeDeleted = data[i].slice();
-          fakeDeleted[16] = 'Deleted';
+          fakeDeleted[17] = 'Deleted';
           syncProductRowToHibualamoSheet_(fakeDeleted);
         } catch (e) {}
         sheet.deleteRow(i + 1);
@@ -1516,14 +1527,14 @@ function deleteProductData(idProduk, sessionUser) {
           throw new Error('Akses ditolak: Anda hanya bisa menghapus produk milik Anda sendiri.');
         }
 
-        const photosToTrash = extractAllDriveFileIds_(String(data[i][13] || '') + ',' + String(data[i][12] || ''));
+        const photosToTrash = extractAllDriveFileIds_(String(data[i][14] || '') + ',' + String(data[i][13] || ''));
         for (let t = 0; t < photosToTrash.length; t++) {
           trashOldDriveFile_(photosToTrash[t]);
         }
 
         try {
           const fakeRejectedRow = data[i].slice();
-          fakeRejectedRow[16] = 'Deleted';
+          fakeRejectedRow[17] = 'Deleted';
           syncProductRowToHibualamoSheet_(fakeRejectedRow);
         } catch (e) {}
 
