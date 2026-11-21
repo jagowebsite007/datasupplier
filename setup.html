@@ -113,33 +113,37 @@ function setupSheetsOnly_() {
     sheetSuppliers.getRange(2, 1, defaultSuppliers.length, defaultSuppliers[0].length).setValues(defaultSuppliers);
   }
 
-  // 2. Siapkan Sheet Products (18 Kolom — termasuk status_approval & approved_at untuk hibualamo.shop)
+  // 2. Siapkan Sheet Products (21 Kolom — kategori [F] dan sub_kategori [G] dipisah bersebelahan)
   let sheetProducts = ss.getSheetByName(SHEET_PRODUCTS_NAME);
   if (!sheetProducts) {
     sheetProducts = ss.insertSheet(SHEET_PRODUCTS_NAME);
   }
 
+  const prodHeaders = [
+    'id_produk',
+    'id_supplier',
+    'nama_supplier',
+    'kode_sku',
+    'nama_produk',
+    'kategori',
+    'sub_kategori',
+    'satuan',
+    'harga_supplier',
+    'harga_jual_supplier',
+    'harga_supplier_lama',
+    'harga_jual_lama',
+    'total_stok',
+    'foto_url',
+    'link_download_foto',
+    'catatan',
+    'updated_at',
+    'status_approval',
+    'approved_at',
+    'harga_asli',
+    'is_terlaris'
+  ];
+
   if (sheetProducts.getLastRow() === 0) {
-    const prodHeaders = [
-      'id_produk',
-      'id_supplier',
-      'nama_supplier',
-      'kode_sku',
-      'nama_produk',
-      'kategori',
-      'satuan',
-      'harga_supplier',
-      'harga_jual_supplier',
-      'harga_supplier_lama',
-      'harga_jual_lama',
-      'total_stok',
-      'foto_url',
-      'link_download_foto',
-      'catatan',
-      'updated_at',
-      'status_approval',
-      'approved_at'
-    ];
     sheetProducts.getRange(1, 1, 1, prodHeaders.length).setValues([prodHeaders]);
     sheetProducts.getRange(1, 1, 1, prodHeaders.length).setFontWeight('bold').setBackground('#0f766e').setFontColor('#ffffff');
 
@@ -151,19 +155,22 @@ function setupSheetsOnly_() {
         'PT Sumber Pangan Jaya',
         'BRS-PRM-5KG',
         'Beras Premium Ramos 5 Kg',
+        'Makanan',
         'Sembako',
         'Karung 5Kg',
         68500,
         74500,
         67000,
-        73000,
+        74500,
         120,
         'https://placehold.co/200x200/0f766e/ffffff?text=Beras+5Kg',
         'https://placehold.co/200x200/0f766e/ffffff?text=Beras+5Kg',
         'Minimal order 10 karung gratis ongkir',
         now,
         'Approved',
-        now
+        now,
+        74500,
+        false
       ],
       [
         'PRD-1002',
@@ -171,6 +178,7 @@ function setupSheetsOnly_() {
         'PT Sumber Pangan Jaya',
         'MYK-GRG-2L',
         'Minyak Goreng Sawit Pouch 2 Liter',
+        'Makanan',
         'Sembako',
         'Pouch 2L',
         34000,
@@ -183,7 +191,9 @@ function setupSheetsOnly_() {
         'Harga turun minggu ini, stok siap kirim',
         now,
         'Pending',
-        ''
+        '',
+        39500,
+        false
       ],
       [
         'PRD-1003',
@@ -191,6 +201,7 @@ function setupSheetsOnly_() {
         'CV Berkah Sembako Makmur',
         'GUL-PSR-1KG',
         'Gula Pasir Kristal Putih 1 Kg',
+        'Makanan',
         'Sembako',
         'Pack 1Kg',
         16200,
@@ -203,13 +214,77 @@ function setupSheetsOnly_() {
         'Kemasan tebal kualitas supermarket',
         now,
         'Pending',
-        ''
+        '',
+        18000,
+        false
       ]
     ];
     sheetProducts.getRange(2, 1, sampleProducts.length, sampleProducts[0].length).setValues(sampleProducts);
-  } else if (sheetProducts.getLastColumn() < 18) {
-    sheetProducts.getRange(1, 17, 1, 2).setValues([['status_approval', 'approved_at']]);
-    sheetProducts.getRange(1, 17, 1, 2).setFontWeight('bold').setBackground('#0f766e').setFontColor('#ffffff');
+  } else {
+    // Auto-migrasi Opsi 2: Jika kolom ke-7 (G) belum bernama "sub_kategori", sisipkan kolom G & pisahkan data lama
+    const col7Header = String(sheetProducts.getRange(1, 7).getValue() || '').trim().toLowerCase();
+    if (col7Header !== 'sub_kategori') {
+      sheetProducts.insertColumnAfter(6);
+      const lastRow = sheetProducts.getLastRow();
+      if (lastRow > 1) {
+        const currentLastCol = sheetProducts.getLastColumn();
+        const rows = sheetProducts.getRange(2, 1, lastRow - 1, currentLastCol).getValues();
+        const migratedRows = [];
+
+        for (let rIdx = 0; rIdx < rows.length; rIdx++) {
+          const src = rows[rIdx];
+          let katVal = String(src[5] || '').trim();
+          let migratedSub = currentLastCol >= 21 ? String(src[20] || '').trim() : '';
+          const migratedHargaAsli =
+            currentLastCol >= 20 && src[19] !== '' && src[19] !== undefined
+              ? src[19]
+              : (src[11] || src[9] || 0);
+          const migratedTerlaris = currentLastCol >= 22
+            ? (src[21] === true || String(src[21] || '').toUpperCase() === 'TRUE')
+            : false;
+
+          if (katVal.indexOf(' - ') !== -1) {
+            const parts = katVal.split(' - ');
+            katVal = parts[0].trim();
+            if (!migratedSub) {
+              migratedSub = parts.slice(1).join(' - ').trim();
+            }
+          }
+
+          migratedRows.push([
+            src[0] !== undefined ? src[0] : '',
+            src[1] !== undefined ? src[1] : '',
+            src[2] !== undefined ? src[2] : '',
+            src[3] !== undefined ? src[3] : '',
+            src[4] !== undefined ? src[4] : '',
+            katVal,
+            migratedSub,
+            src[7] !== undefined ? src[7] : '',
+            src[8] !== undefined ? src[8] : 0,
+            src[9] !== undefined ? src[9] : 0,
+            src[10] !== undefined ? src[10] : 0,
+            src[11] !== undefined ? src[11] : 0,
+            src[12] !== undefined ? src[12] : 0,
+            src[13] !== undefined ? src[13] : '',
+            src[14] !== undefined ? src[14] : '',
+            src[15] !== undefined ? src[15] : '',
+            src[16] !== undefined ? src[16] : '',
+            src[17] !== undefined ? src[17] : 'Pending',
+            src[18] !== undefined ? src[18] : '',
+            migratedHargaAsli,
+            migratedTerlaris
+          ]);
+        }
+
+        sheetProducts.getRange(2, 1, migratedRows.length, prodHeaders.length).setValues(migratedRows);
+        if (sheetProducts.getLastColumn() > prodHeaders.length) {
+          sheetProducts.deleteColumns(prodHeaders.length + 1, sheetProducts.getLastColumn() - prodHeaders.length);
+        }
+      }
+    }
+
+    sheetProducts.getRange(1, 1, 1, prodHeaders.length).setValues([prodHeaders]);
+    sheetProducts.getRange(1, 1, 1, prodHeaders.length).setFontWeight('bold').setBackground('#0f766e').setFontColor('#ffffff');
   }
 
   // 3. Siapkan Sheet Katalog hibualamo.shop (16 Kolom sesuai format hibualamo.shop)
